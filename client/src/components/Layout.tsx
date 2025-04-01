@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Sidebar from "./Sidebar";
@@ -9,98 +9,147 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [pricingSidebarOpen, setPricingSidebarOpen] = useState(false);
-  const [aboutSidebarOpen, setAboutSidebarOpen] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isPricingSidebarOpen, setIsPricingSidebarOpen] = useState(false);
+  const [isAboutSidebarOpen, setIsAboutSidebarOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const togglePricingSidebar = () => {
-    setPricingSidebarOpen(!pricingSidebarOpen);
+    setIsPricingSidebarOpen(!isPricingSidebarOpen);
   };
 
   const toggleAboutSidebar = () => {
-    setAboutSidebarOpen(!aboutSidebarOpen);
-  };
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    setIsAboutSidebarOpen(!isAboutSidebarOpen);
   };
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
-    };
+    // Make the sidebar toggle functions available globally
+    (window as any).togglePricingSidebar = togglePricingSidebar;
+    (window as any).toggleAboutSidebar = toggleAboutSidebar;
 
-    // Add AOS for on-scroll animations
-    if (typeof window !== 'undefined') {
-      import('aos').then((AOS) => {
-        AOS.init({
-          duration: 1000,
-          easing: 'ease-out-cubic',
-          once: true,
-          mirror: false,
-          disable: window.innerWidth < 768
-        });
-      });
+    // Add/remove overflow-hidden class to body when menu is open
+    if (isMenuOpen) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
     }
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => {
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [isMenuOpen]);
 
   return (
-    <div className="font-montserrat bg-black text-white min-h-screen flex flex-col relative overflow-x-hidden">
-      {/* Logo */}
-      <img 
-        src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80" 
-        alt="Housing Lord Logo" 
-        className="fixed top-5 left-5 z-50 w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full object-cover animate-float shadow-lg shadow-primary/30 bg-black p-1 transition-all hover:scale-110 hover:rotate-3 hover:brightness-110 hover:shadow-xl hover:shadow-primary/50"
-      />
-      
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar isMenuOpen={isMenuOpen} toggleMenu={toggleMenu} />
-
-      <main>
+      
+      {/* Mobile Menu */}
+      <div
+        className={`fixed inset-0 z-30 bg-background transform transition-transform duration-300 ease-in-out ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ top: "60px" }}
+      >
+        <div className="container h-full mx-auto px-4 pt-6 pb-20 overflow-y-auto">
+          <nav className="flex flex-col space-y-6">
+            <a 
+              href="#" 
+              className="text-2xl font-bold text-white hover:text-primary transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </a>
+            <a 
+              href="#properties" 
+              className="text-2xl font-bold text-white hover:text-primary transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Properties
+            </a>
+            <a 
+              href="#how-it-works" 
+              className="text-2xl font-bold text-white hover:text-primary transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              How It Works
+            </a>
+            <a 
+              href="#about" 
+              className="text-2xl font-bold text-white hover:text-primary transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
+            </a>
+            <a 
+              href="#faq" 
+              className="text-2xl font-bold text-white hover:text-primary transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              FAQs
+            </a>
+            <a 
+              href="#contact" 
+              className="text-2xl font-bold text-white hover:text-primary transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
+            </a>
+            
+            <div className="pt-6 border-t border-primary/20 flex flex-col space-y-4">
+              <button 
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  togglePricingSidebar();
+                }}
+                className="w-full py-3 text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors"
+              >
+                List Property
+              </button>
+              <button className="w-full py-3 bg-primary text-black rounded-lg hover:bg-white hover:text-primary transition-colors">
+                Sign In
+              </button>
+            </div>
+            
+            <div className="pt-6 border-t border-primary/20">
+              <div className="flex space-x-4 justify-center">
+                <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/30 transition-colors" aria-label="Facebook">
+                  <i className="fab fa-facebook-f text-primary"></i>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/30 transition-colors" aria-label="Twitter">
+                  <i className="fab fa-twitter text-primary"></i>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/30 transition-colors" aria-label="Instagram">
+                  <i className="fab fa-instagram text-primary"></i>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/30 transition-colors" aria-label="LinkedIn">
+                  <i className="fab fa-linkedin-in text-primary"></i>
+                </a>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <main className="flex-grow">
         {children}
       </main>
-
-      <Sidebar 
-        type="pricing"
-        isOpen={pricingSidebarOpen}
-        onClose={togglePricingSidebar}
-      />
-
-      <Sidebar
-        type="about"
-        isOpen={aboutSidebarOpen}
-        onClose={toggleAboutSidebar}
-      />
-
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 bg-primary text-black w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg transition-all hover:-translate-y-1 hover:bg-white hover:text-primary hover:scale-110 hover:shadow-primary/40 z-50 ${
-          showBackToTop ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
-        aria-label="Back to top"
-      >
-        ↑
-      </button>
-
+      
       <Footer />
-
-      {/* Make sidebar toggles available globally */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.togglePricingSidebar = ${togglePricingSidebar.toString()};
-            window.toggleAboutSidebar = ${toggleAboutSidebar.toString()};
-          `,
-        }}
+      
+      {/* Sidebars */}
+      <Sidebar 
+        type="pricing" 
+        isOpen={isPricingSidebarOpen} 
+        onClose={() => setIsPricingSidebarOpen(false)} 
+      />
+      
+      <Sidebar 
+        type="about" 
+        isOpen={isAboutSidebarOpen} 
+        onClose={() => setIsAboutSidebarOpen(false)} 
       />
     </div>
   );

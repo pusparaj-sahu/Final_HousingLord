@@ -4,55 +4,114 @@ interface AboutPoint {
 }
 
 export default function AboutSection() {
-  const leftPoints: AboutPoint[] = [
-    { icon: "🚀", text: "Fast & Transparent Rentals – No hidden fees, clear process" },
-    { icon: "🤝", text: "65+ Happy House Owners – Trusted by property owners" },
-    { icon: "🔍", text: "Quick Tenant Placement – Verified listings & screening" }
-  ];
-
-  const rightPoints: AboutPoint[] = [
-    { icon: "📜", text: "Legal Rental Agreements – Hassle-free documentation" },
-    { icon: "💰", text: "Affordable & Fixed Service Fee – Best rates guaranteed" },
-    { icon: "☎️", text: "Dedicated Customer Support – 24/7 assistance for seamless renting experience" }
+  const aboutPoints: AboutPoint[] = [
+    {
+      icon: "fas fa-check-circle",
+      text: "All properties personally verified by our team",
+    },
+    {
+      icon: "fas fa-shield-alt",
+      text: "Background checks on all tenants",
+    },
+    {
+      icon: "fas fa-file-contract",
+      text: "Legally vetted rental agreements",
+    },
+    {
+      icon: "fas fa-hand-holding-usd",
+      text: "Transparent pricing with no hidden fees",
+    },
+    {
+      icon: "fas fa-headset",
+      text: "24/7 customer support for tenants & owners",
+    },
+    {
+      icon: "fas fa-camera",
+      text: "High-quality photos & virtual tours",
+    },
   ];
 
   return (
-    <section id="about-section" className="py-16 md:py-24 bg-[#111111]">
-      <h2 className="text-center text-4xl md:text-5xl text-primary mb-16 bg-[#1a1a1a] py-4 rounded-lg w-4/5 mx-auto shadow-md shadow-primary/10">
-        Why Choose Housing Lord?
-      </h2>
-      
-      <div className="container mx-auto px-6 max-w-6xl">
-        <div className="grid md:grid-cols-2 gap-10 mb-12">
+    <section id="about" className="py-20 bg-[#0a0a0a]">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div data-aos="fade-right">
-            {leftPoints.map((point, index) => (
-              <div 
-                key={`left-${index}`}
-                className="bg-primary/10 hover:bg-primary/20 rounded-lg p-4 flex items-center mb-6 transform transition-all duration-300 hover:-translate-y-2"
-              >
-                <span className="text-4xl mr-4">{point.icon}</span>
-                <p className="text-lg">{point.text}</p>
-              </div>
-            ))}
+            <span className="text-primary font-semibold uppercase tracking-wider">About Us</span>
+            <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-6 text-white">
+              A New Approach to <span className="text-primary">Rental Services</span>
+            </h2>
+            <p className="text-white/70 leading-relaxed mb-8">
+              Founded in 2023, Housing Lord has quickly become Odisha's premier 
+              rental service platform, connecting property owners with verified tenants 
+              across Bhubaneswar, Cuttack, and Puri.
+            </p>
+            <p className="text-white/70 leading-relaxed mb-8">
+              Our mission is to transform the rental experience in Odisha by creating a 
+              transparent, efficient marketplace that benefits both property owners and tenants.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              {aboutPoints.map((point, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-start gap-3"
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
+                >
+                  <div className="text-primary text-xl mt-0.5">
+                    <i className={point.icon}></i>
+                  </div>
+                  <p className="text-white/90">{point.text}</p>
+                </div>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.toggleAboutSidebar) {
+                  (window as any).toggleAboutSidebar();
+                }
+              }}
+              className="border border-primary text-white py-3 px-6 rounded-full font-bold hover:bg-primary/10 transition-colors"
+            >
+              <i className="fas fa-info-circle mr-2"></i> Learn More About Us
+            </button>
           </div>
           
-          <div data-aos="fade-left">
-            {rightPoints.map((point, index) => (
-              <div 
-                key={`right-${index}`}
-                className="bg-primary/10 hover:bg-primary/20 rounded-lg p-4 flex items-center mb-6 transform transition-all duration-300 hover:-translate-y-2"
-              >
-                <span className="text-4xl mr-4">{point.icon}</span>
-                <p className="text-lg">{point.text}</p>
+          <div data-aos="fade-left" className="grid grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div className="rounded-xl overflow-hidden h-[250px] shadow-lg shadow-primary/10">
+                <img 
+                  src="https://images.unsplash.com/photo-1600585154084-4e5fe7c39198?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                  alt="Modern living room" 
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                />
               </div>
-            ))}
+              <div className="rounded-xl overflow-hidden h-[200px] shadow-lg shadow-primary/10">
+                <img 
+                  src="https://images.unsplash.com/photo-1600607686527-6fb886090705?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                  alt="Kitchen interior" 
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+            </div>
+            <div className="space-y-6 mt-10">
+              <div className="rounded-xl overflow-hidden h-[200px] shadow-lg shadow-primary/10">
+                <img 
+                  src="https://images.unsplash.com/photo-1600566752355-35792bedcfea?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                  alt="Modern bedroom" 
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="rounded-xl overflow-hidden h-[250px] shadow-lg shadow-primary/10">
+                <img 
+                  src="https://images.unsplash.com/photo-1602872030490-4a484a7b3ba6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                  alt="Apartment building" 
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        
-        <div className="text-center" data-aos="fade-up">
-          <button className="bg-primary text-black font-bold py-3 px-8 rounded-full text-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/30">
-            Join Housing Lord – Simplify Your Rental Journey!
-          </button>
         </div>
       </div>
     </section>

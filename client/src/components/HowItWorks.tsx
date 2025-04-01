@@ -6,85 +6,81 @@ interface Step {
 }
 
 export default function HowItWorks() {
-  const tenantSteps: Step[] = [
-    { icon: "🏡", title: "Step 1", description: "Browse verified properties", delay: 0 },
-    { icon: "📞", title: "Step 2", description: "Connect with property owners", delay: 100 },
-    { icon: "✅", title: "Step 3", description: "Complete legal formalities", delay: 200 },
-    { icon: "🎉", title: "Step 4", description: "Move in stress-free", delay: 300 }
-  ];
-
-  const ownerSteps: Step[] = [
-    { icon: "📌", title: "Step 1", description: "List your property", delay: 0 },
-    { icon: "🔍", title: "Step 2", description: "Get tenant verification", delay: 100 },
-    { icon: "💰", title: "Step 3", description: "Set the best rental price", delay: 200 },
-    { icon: "🤝", title: "Step 4", description: "Rent out stress-free", delay: 300 }
+  const steps: Step[] = [
+    {
+      icon: "fas fa-search",
+      title: "Search Properties",
+      description: "Browse our extensive collection of verified properties across Bhubaneswar, Cuttack, and Puri.",
+      delay: 0,
+    },
+    {
+      icon: "fas fa-calendar-check",
+      title: "Schedule Visits",
+      description: "Book property visits at your convenience through our simple scheduling system.",
+      delay: 200,
+    },
+    {
+      icon: "fas fa-file-signature",
+      title: "Apply & Verify",
+      description: "Complete your application and verification process entirely online - fast and secure.",
+      delay: 400,
+    },
+    {
+      icon: "fas fa-key",
+      title: "Get Your Keys",
+      description: "Sign the lease agreement and receive your keys to your new home!",
+      delay: 600,
+    },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-[#111111] text-white" id="services">
-      <div className="container mx-auto px-6 max-w-6xl">
-        <h2 className="text-center text-4xl md:text-5xl text-primary mb-16 bg-[#1a1a1a] py-4 rounded-lg w-4/5 mx-auto shadow-md shadow-primary/10">
-          How It Works?
-        </h2>
-        
-        <div className="grid md:grid-cols-2 gap-10 mb-16">
-          <div className="tenant-path">
-            <h3 className="text-2xl md:text-3xl text-primary mb-8 text-center">For Tenants</h3>
-            <div className="space-y-8">
-              {tenantSteps.map((step, index) => (
-                <div 
-                  key={`tenant-${index}`}
-                  className="step flex items-center bg-[#1a1a1a]/50 hover:bg-primary/5 p-4 rounded-lg transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/10" 
-                  data-aos="fade-right"
-                  data-aos-delay={step.delay}
-                >
-                  <div className="step-icon text-4xl mr-6 bg-primary/10 hover:bg-primary/20 p-5 rounded-full transition-all duration-300">
-                    {step.icon}
-                  </div>
-                  <div className="step-content flex-1">
-                    <h4 className="text-2xl text-primary mb-2 font-semibold transition-transform duration-300">
-                      {step.title}
-                    </h4>
-                    <p className="text-xl transition-transform duration-300">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="owner-path">
-            <h3 className="text-2xl md:text-3xl text-primary mb-8 text-center">For Owners</h3>
-            <div className="space-y-8">
-              {ownerSteps.map((step, index) => (
-                <div 
-                  key={`owner-${index}`}
-                  className="step flex items-center bg-[#1a1a1a]/50 hover:bg-primary/5 p-4 rounded-lg transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/10" 
-                  data-aos="fade-left"
-                  data-aos-delay={step.delay}
-                >
-                  <div className="step-icon text-4xl mr-6 bg-primary/10 hover:bg-primary/20 p-5 rounded-full transition-all duration-300">
-                    {step.icon}
-                  </div>
-                  <div className="step-content flex-1">
-                    <h4 className="text-2xl text-primary mb-2 font-semibold transition-transform duration-300">
-                      {step.title}
-                    </h4>
-                    <p className="text-xl transition-transform duration-300">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+    <section id="how-it-works" className="py-20 bg-gradient-to-b from-black to-[#121212]">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16" data-aos="fade-up">
+          <span className="text-primary font-semibold uppercase tracking-wider">Simple Process</span>
+          <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-6 text-white">How Housing Lord Works</h2>
+          <p className="text-white/70 max-w-3xl mx-auto">
+            We've streamlined the rental process to make finding your next home or tenant as easy as possible.
+            Follow these simple steps to get started.
+          </p>
         </div>
-        
-        <div className="text-center" data-aos="fade-up">
-          <button className="bg-primary text-black font-bold py-3 px-8 rounded-full text-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/30">
-            Start Your Journey Today!
-          </button>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {steps.map((step, index) => (
+            <div 
+              key={index} 
+              data-aos="fade-up" 
+              data-aos-delay={step.delay}
+              className="bg-background/30 rounded-lg p-6 border border-primary/20 hover:border-primary/60 transition-all hover:shadow-lg hover:shadow-primary/20 group"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <i className={`${step.icon} text-primary text-2xl`}></i>
+              </div>
+              <h3 className="text-white text-xl font-bold mb-3 flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-black font-bold">
+                  {index + 1}
+                </span>
+                {step.title}
+              </h3>
+              <p className="text-white/70">
+                {step.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-16 text-center" data-aos="fade-up">
+          <p className="text-white/70 mb-6 max-w-2xl mx-auto">
+            Have questions about how our process works? Our customer support team is available 7 days a week to help you.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="bg-primary text-black py-3 px-6 rounded-full font-bold hover:bg-white hover:text-primary transition-colors">
+              <i className="fas fa-headset mr-2"></i> Get Support
+            </button>
+            <button className="border border-primary text-white py-3 px-6 rounded-full font-bold hover:bg-primary/10 transition-colors">
+              <i className="fas fa-play-circle mr-2"></i> Watch Tutorial
+            </button>
+          </div>
         </div>
       </div>
     </section>
