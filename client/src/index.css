@@ -1,6 +1,7 @@
-/* Import Google Font */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+/* Import Google Font with optimized loading */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap&text=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,/()%20-&display=swap');
 
+/* Optimized tailwind imports with layers for better treeshaking */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,6 +66,32 @@
   }
 }
 
+/* Performance optimized classes */
 .font-montserrat {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  text-rendering: optimizeSpeed;
+}
+
+/* Add content-visibility for better paint performance */
+@layer utilities {
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+  
+  /* Add optimized utility classes for faster animations */
+  .gpu-accelerated {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
+  /* Loading state optimizations */
+  .lazy-load-fade-in {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  .lazy-load-fade-in.loaded {
+    opacity: 1;
+  }
 }
