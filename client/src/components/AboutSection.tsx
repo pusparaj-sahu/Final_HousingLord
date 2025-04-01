@@ -68,7 +68,7 @@ export default function AboutSection() {
             
             <button 
               onClick={() => {
-                if (typeof window !== 'undefined' && window.toggleAboutSidebar) {
+                if (typeof window !== 'undefined' && 'toggleAboutSidebar' in (window as any)) {
                   (window as any).toggleAboutSidebar();
                 }
               }}

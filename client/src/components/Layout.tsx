@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import Sidebar from "./Sidebar";
+import Sidebar from "./Sidebar"; // Ensure Sidebar.tsx is in the components directory
 
 interface LayoutProps {
   children: ReactNode;
