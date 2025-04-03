@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { useIsMobile } from "../hooks/use-mobile";
 
-interface NavbarProps {
-  isMenuOpen: boolean;
-  toggleMenu: () => void;
-}
-
-export default function Navbar({ isMenuOpen, toggleMenu }: NavbarProps) {
+export default function Navbar({ isMenuOpen, toggleMenu }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const isMobile = useIsMobile();
 
@@ -55,8 +50,8 @@ export default function Navbar({ isMenuOpen, toggleMenu }: NavbarProps) {
               <div className="flex space-x-4 mr-4">
                 <button 
                   onClick={() => {
-                    if (typeof window !== 'undefined' && (window as any).togglePricingSidebar) {
-                      (window as any).togglePricingSidebar();
+                    if (typeof window !== 'undefined' && window.togglePricingSidebar) {
+                      window.togglePricingSidebar();
                     }
                   }}
                   className="px-4 py-2 text-primary border border-primary rounded-full hover:bg-primary/10 transition-colors"

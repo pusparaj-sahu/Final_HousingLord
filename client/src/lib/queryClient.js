@@ -1,9 +1,9 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 
 /**
  * Optimized error handling with detailed messages
  */
-async function throwIfResNotOk(res: Response) {
+async function throwIfResNotOk(res) {
   if (!res.ok) {
     try {
       // Try to parse JSON error response first
@@ -23,11 +23,11 @@ async function throwIfResNotOk(res: Response) {
  * Performance-optimized API request function with timeouts, caching, and error handling
  */
 export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown,
-  timeout: number = 10000,
-): Promise<Response> {
+  method,
+  url,
+  data,
+  timeout = 10000,
+) {
   // Create AbortController for timeout functionality
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -64,12 +64,8 @@ export async function apiRequest(
 /**
  * Enhanced query function with optimized performance characteristics
  */
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey, signal }) => {
+export const getQueryFn = ({ on401: unauthorizedBehavior }) => {
+  return async ({ queryKey, signal }) => {
     // Create AbortController combining React Query signal and timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -81,7 +77,7 @@ export const getQueryFn: <T>(options: {
     
     try {
       // Performance optimized fetch
-      const res = await fetch(queryKey[0] as string, {
+      const res = await fetch(queryKey[0], {
         credentials: "include",
         signal: controller.signal,
         headers: {
@@ -130,6 +126,7 @@ export const getQueryFn: <T>(options: {
       clearTimeout(timeoutId);
     }
   };
+};
 
 /**
  * Performance-optimized QueryClient configuration
