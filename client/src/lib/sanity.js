@@ -1,13 +1,20 @@
 import {createClient} from '@sanity/client';
 import imageUrlBuilder from '@sanity/image-url';
 
-// Initialize Sanity client
+// For debugging
+console.log('Sanity Config:', {
+  projectId: import.meta.env.VITE_SANITY_PROJECT_ID,
+  dataset: import.meta.env.VITE_SANITY_DATASET
+});
+
+// Initialize Sanity client with hardcoded values for now
+// We'll use a more robust solution later
 export const client = createClient({
-  projectId: process.env.SANITY_PROJECT_ID || '',
-  dataset: process.env.SANITY_DATASET || 'production',
+  projectId: '123abc', // Temporary value to prevent errors
+  dataset: 'production',
   apiVersion: '2023-05-03', // use current date in YYYY-MM-DD format
-  useCdn: process.env.NODE_ENV === 'production',
-  token: process.env.SANITY_API_TOKEN
+  useCdn: false,
+  token: import.meta.env.VITE_SANITY_API_TOKEN
 });
 
 // Initialize image URL builder
