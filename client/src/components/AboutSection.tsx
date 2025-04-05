@@ -1,5 +1,10 @@
+interface AboutPoint {
+  icon: string;
+  text: string;
+}
+
 export default function AboutSection() {
-  const aboutPoints = [
+  const aboutPoints: AboutPoint[] = [
     {
       icon: "fas fa-check-circle",
       text: "All properties personally verified by our team",
@@ -63,8 +68,8 @@ export default function AboutSection() {
             
             <button 
               onClick={() => {
-                if (typeof window !== 'undefined' && window.toggleAboutSidebar) {
-                  window.toggleAboutSidebar();
+                if (typeof window !== 'undefined' && 'toggleAboutSidebar' in (window as any)) {
+                  (window as any).toggleAboutSidebar();
                 }
               }}
               className="border border-primary text-white py-3 px-6 rounded-full font-bold hover:bg-primary/10 transition-colors"

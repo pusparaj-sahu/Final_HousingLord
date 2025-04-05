@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import Sidebar from "./Sidebar"; // Ensure Sidebar.jsx is in the components directory
+import Sidebar from "./Sidebar"; // Ensure Sidebar.tsx is in the components directory
 
-export default function Layout({ children }) {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPricingSidebarOpen, setIsPricingSidebarOpen] = useState(false);
   const [isAboutSidebarOpen, setIsAboutSidebarOpen] = useState(false);
@@ -22,8 +26,8 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     // Make the sidebar toggle functions available globally
-    window.togglePricingSidebar = togglePricingSidebar;
-    window.toggleAboutSidebar = toggleAboutSidebar;
+    (window as any).togglePricingSidebar = togglePricingSidebar;
+    (window as any).toggleAboutSidebar = toggleAboutSidebar;
 
     // Add/remove overflow-hidden class to body when menu is open
     if (isMenuOpen) {

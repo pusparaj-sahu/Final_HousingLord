@@ -10,8 +10,8 @@ export default function HomePage() {
   // Initialize AOS animations on component mount
   useEffect(() => {
     // Check if AOS is available
-    if (typeof window !== 'undefined' && window.AOS) {
-      window.AOS.init({
+    if (typeof window !== 'undefined' && (window as any).AOS) {
+      (window as any).AOS.init({
         duration: 800,
         once: false,
       });
