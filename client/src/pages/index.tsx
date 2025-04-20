@@ -4,6 +4,8 @@ import AboutSection from "../components/AboutSection";
 import PropertyShowcase from "../components/PropertyShowcase";
 import FAQSection from "../components/FAQSection";
 import ContactSection from "../components/ContactSection";
+import WhyChooseHousingLord from "../components/WhyChooseHousingLord";
+import TransparentPricing from "../components/TransparentPricing";
 import { useEffect } from "react";
 
 export default function HomePage() {
@@ -23,6 +25,8 @@ export default function HomePage() {
       <HeroSection />
       <PropertyShowcase />
       <HowItWorks />
+      <WhyChooseHousingLord />
+      <TransparentPricing />
       <AboutSection />
       <FAQSection />
       <ContactSection />

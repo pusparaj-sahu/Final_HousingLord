@@ -6,81 +6,135 @@ interface Step {
 }
 
 export default function HowItWorks() {
-  const steps: Step[] = [
+  const tenantSteps: Step[] = [
     {
-      icon: "fas fa-search",
-      title: "Search Properties",
-      description: "Browse our extensive collection of verified properties across Bhubaneswar, Cuttack, and Puri.",
-      delay: 0,
+      icon: "fas fa-home",
+      title: "Browse verified properties",
+      description: "Explore our extensive collection of verified properties in prime locations.",
+      delay: 100,
     },
     {
-      icon: "fas fa-calendar-check",
-      title: "Schedule Visits",
-      description: "Book property visits at your convenience through our simple scheduling system.",
+      icon: "fas fa-hand-pointer",
+      title: "Submit your interest",
+      description: "Choose a property and express your interest—Housing Lord will facilitate the process with the property owner.",
       delay: 200,
     },
     {
       icon: "fas fa-file-signature",
-      title: "Apply & Verify",
-      description: "Complete your application and verification process entirely online - fast and secure.",
-      delay: 400,
+      title: "Complete legal formalities",
+      description: "Seamlessly complete all necessary documentation and verification process.",
+      delay: 300,
     },
     {
-      icon: "fas fa-key",
-      title: "Get Your Keys",
-      description: "Sign the lease agreement and receive your keys to your new home!",
-      delay: 600,
+      icon: "fas fa-smile",
+      title: "Move in stress-free",
+      description: "Get your keys and start your journey in your new home worry-free.",
+      delay: 400,
+    },
+  ];
+
+  const ownerSteps: Step[] = [
+    {
+      icon: "fas fa-clipboard-list",
+      title: "List your property",
+      description: "Create an attractive listing with photos and detailed information.",
+      delay: 100,
+    },
+    {
+      icon: "fas fa-user-check",
+      title: "Get tenant verification",
+      description: "We verify potential tenants to ensure security and reliability.",
+      delay: 200,
+    },
+    {
+      icon: "fas fa-money-bill-wave",
+      title: "Set the best rental price",
+      description: "Get market insights to set competitive rental prices for your property.",
+      delay: 300,
+    },
+    {
+      icon: "fas fa-handshake",
+      title: "Rent out stress-free",
+      description: "Find reliable tenants and manage your property with ease.",
+      delay: 400,
     },
   ];
 
   return (
-    <section id="how-it-works" className="py-20 bg-gradient-to-b from-black to-[#121212]">
+    <section id="how-it-works" className="py-20 bg-gradient-to-b from-black to-[#121212] overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16" data-aos="fade-up">
-          <span className="text-primary font-semibold uppercase tracking-wider">Simple Process</span>
-          <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-6 text-white">How Housing Lord Works</h2>
-          <p className="text-white/70 max-w-3xl mx-auto">
-            We've streamlined the rental process to make finding your next home or tenant as easy as possible.
-            Follow these simple steps to get started.
-          </p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-yellow-400">How It Works?</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((step, index) => (
-            <div 
-              key={index} 
-              data-aos="fade-up" 
-              data-aos-delay={step.delay}
-              className="bg-background/30 rounded-lg p-6 border border-primary/20 hover:border-primary/60 transition-all hover:shadow-lg hover:shadow-primary/20 group"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <i className={`${step.icon} text-primary text-2xl`}></i>
-              </div>
-              <h3 className="text-white text-xl font-bold mb-3 flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-black font-bold">
-                  {index + 1}
-                </span>
-                {step.title}
-              </h3>
-              <p className="text-white/70">
-                {step.description}
-              </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+          {/* Tenants Section */}
+          <div className="space-y-8" data-aos="fade-right">
+            <h3 className="text-3xl font-bold text-yellow-400 text-center mb-10">For Tenants</h3>
+            <div className="space-y-12">
+              {tenantSteps.map((step, index) => (
+                <div
+                  key={`tenant-${index}`}
+                  data-aos="fade-up"
+                  data-aos-delay={step.delay}
+                  className="flex items-start gap-6 group"
+                >
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-yellow-400/10 flex items-center justify-center group-hover:bg-yellow-400/20 transition-all duration-300">
+                      <i className={`${step.icon} text-yellow-400 text-2xl`}></i>
+                    </div>
+                    {index < tenantSteps.length - 1 && (
+                      <div className="absolute top-16 left-1/2 w-0.5 h-16 bg-yellow-400/20 -translate-x-1/2"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xl font-bold text-yellow-400">Step {index + 1}</span>
+                      <h4 className="text-white text-xl font-semibold">{step.title}</h4>
+                    </div>
+                    <p className="text-white/70">{step.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Owners Section */}
+          <div className="space-y-8" data-aos="fade-left">
+            <h3 className="text-3xl font-bold text-yellow-400 text-center mb-10">For Owners</h3>
+            <div className="space-y-12">
+              {ownerSteps.map((step, index) => (
+                <div
+                  key={`owner-${index}`}
+                  data-aos="fade-up"
+                  data-aos-delay={step.delay}
+                  className="flex items-start gap-6 group"
+                >
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-yellow-400/10 flex items-center justify-center group-hover:bg-yellow-400/20 transition-all duration-300">
+                      <i className={`${step.icon} text-yellow-400 text-2xl`}></i>
+                    </div>
+                    {index < ownerSteps.length - 1 && (
+                      <div className="absolute top-16 left-1/2 w-0.5 h-16 bg-yellow-400/20 -translate-x-1/2"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xl font-bold text-yellow-400">Step {index + 1}</span>
+                      <h4 className="text-white text-xl font-semibold">{step.title}</h4>
+                    </div>
+                    <p className="text-white/70">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mt-16 text-center" data-aos="fade-up">
-          <p className="text-white/70 mb-6 max-w-2xl mx-auto">
-            Have questions about how our process works? Our customer support team is available 7 days a week to help you.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-primary text-black py-3 px-6 rounded-full font-bold hover:bg-white hover:text-primary transition-colors">
-              <i className="fas fa-headset mr-2"></i> Get Support
-            </button>
-            <button className="border border-primary text-white py-3 px-6 rounded-full font-bold hover:bg-primary/10 transition-colors">
-              <i className="fas fa-play-circle mr-2"></i> Watch Tutorial
-            </button>
-          </div>
+          <button className="bg-yellow-400 text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-yellow-300 transform hover:scale-105 transition-all duration-300">
+            Start Your Journey Today!
+          </button>
         </div>
       </div>
     </section>

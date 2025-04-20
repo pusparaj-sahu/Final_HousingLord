@@ -38,38 +38,38 @@ export default function FAQSection() {
     },
     {
       question: "Can I get my property professionally photographed through Housing Lord?",
-      answer: "Yes, professional photography services are included in our Premium and Elite listing packages. For Basic package users, this service can be added for an additional fee."
+      answer: "Yes, We do offer professional photography services at an additional cost. Give us a call to learn more about pricing and availability."
     },
-    {
-      question: "How do rent payments work through your platform?",
-      answer: "We offer a secure payment gateway where tenants can pay rent online. The amount is directly transferred to the property owner's bank account after deducting our service fee (if applicable). This provides a transparent and hassle-free experience for both parties."
-    },
+    // {
+    //   question: "How do rent payments work through your platform?",
+    //   answer: "We offer a secure payment gateway where tenants can pay rent online. The amount is directly transferred to the property owner's bank account after deducting our service fee (if applicable). This provides a transparent and hassle-free experience for both parties."
+    // },
   ];
 
   return (
-    <section id="faq" className="py-20 bg-black">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16" data-aos="fade-up">
-          <span className="text-primary font-semibold uppercase tracking-wider">Got Questions?</span>
-          <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-6 text-white">Frequently Asked Questions</h2>
-          <p className="text-white/70 max-w-3xl mx-auto">
+    <section id="faq" className="py-16 sm:py-20 bg-black">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-12 sm:mb-16" data-aos="fade-up">
+          <span className="text-primary text-sm sm:text-base font-semibold uppercase tracking-wider">Got Questions?</span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mt-2 sm:mt-3 mb-4 sm:mb-6 text-white">Frequently Asked Questions</h2>
+          <p className="text-sm sm:text-base text-white/70 max-w-3xl mx-auto">
             Find answers to common questions about our services, pricing, and processes.
             If you can't find what you're looking for, feel free to contact us.
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto" data-aos="fade-up">
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`}
                 className="bg-background/20 border border-primary/20 rounded-lg overflow-hidden"
               >
-                <AccordionTrigger className="px-6 py-4 text-white hover:text-primary font-semibold text-left">
+                <AccordionTrigger className="px-4 sm:px-6 py-3 sm:py-4 text-white hover:text-primary font-semibold text-left text-sm sm:text-base">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4 text-white/80">
+                <AccordionContent className="px-4 sm:px-6 pb-3 sm:pb-4 text-white/80 text-sm sm:text-base">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -77,13 +77,14 @@ export default function FAQSection() {
           </Accordion>
         </div>
 
-        <div className="mt-12 text-center" data-aos="fade-up">
-          <p className="text-white/70 mb-6">
-            Can't find the answer you're looking for? Contact our support team
-          </p>
-          <button className="bg-primary text-black py-3 px-6 rounded-full font-bold hover:bg-white hover:text-primary transition-colors">
-            <i className="fas fa-comment mr-2"></i> Contact Support
-          </button>
+        <div className="mt-10 sm:mt-12 text-center" data-aos="fade-up">
+          <p className="text-white/70 text-sm sm:text-base mb-4">Still have questions?</p>
+          <a 
+            href="#contact" 
+            className="inline-flex items-center justify-center px-6 py-3 text-sm sm:text-base bg-primary text-black rounded-full hover:bg-white hover:text-primary transition-colors font-semibold"
+          >
+            Contact Us
+          </a>
         </div>
       </div>
     </section>

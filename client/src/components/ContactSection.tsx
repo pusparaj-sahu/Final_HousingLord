@@ -83,7 +83,7 @@ export default function ContactSection() {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-3 bg-background border border-primary/30 text-white rounded-lg focus:outline-none focus:border-primary"
-                      placeholder="John Doe"
+                      placeholder="Ram Sharma"
                     />
                   </div>
                   <div>
@@ -96,7 +96,7 @@ export default function ContactSection() {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-3 bg-background border border-primary/30 text-white rounded-lg focus:outline-none focus:border-primary"
-                      placeholder="john@example.com"
+                      placeholder="ram@example.com"
                     />
                   </div>
                 </div>
@@ -169,11 +169,9 @@ export default function ContactSection() {
                     <i className="fas fa-map-marker-alt text-primary text-xl"></i>
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold text-lg">Our Office Locations</h4>
+                    <h4 className="text-white font-semibold text-lg">Our Office Location</h4>
                     <p className="text-white/70 mt-1">
-                      Bhubaneswar: Unit 501, 5th Floor, Chandaka Industrial Estate<br />
-                      Cuttack: 23/A, College Square<br />
-                      Puri: Marine Drive Road, Near Light House
+                      405, A-5, Jagannath Warriors Residency, near Infocity- II, Madanpur, Bhubaneswar, Odisha 752054
                     </p>
                   </div>
                 </div>
@@ -185,9 +183,7 @@ export default function ContactSection() {
                   <div>
                     <h4 className="text-white font-semibold text-lg">Phone Numbers</h4>
                     <p className="text-white/70 mt-1">
-                      Customer Support: +91 9876 543 210<br />
-                      Property Listing: +91 9632 587 410<br />
-                      Tenant Verification: +91 9854 763 210
+                      +916371636969
                     </p>
                   </div>
                 </div>
@@ -199,9 +195,8 @@ export default function ContactSection() {
                   <div>
                     <h4 className="text-white font-semibold text-lg">Email Addresses</h4>
                     <p className="text-white/70 mt-1">
-                      General Inquiries: info@housinglord.com<br />
-                      Support: support@housinglord.com<br />
-                      Business: business@housinglord.com
+                      info@housinglord.com<br />
+                      support@housinglord.com
                     </p>
                   </div>
                 </div>
@@ -213,9 +208,8 @@ export default function ContactSection() {
                   <div>
                     <h4 className="text-white font-semibold text-lg">Business Hours</h4>
                     <p className="text-white/70 mt-1">
-                      Monday - Friday: 9:00 AM - 7:00 PM<br />
-                      Saturday: 9:00 AM - 5:00 PM<br />
-                      Sunday: Closed (Online Support Available)
+                      Monday - Saturday: 9:00 AM - 7:00 PM<br />
+                      Sunday: Closed
                     </p>
                   </div>
                 </div>
