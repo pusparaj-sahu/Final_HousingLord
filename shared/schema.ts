@@ -38,6 +38,7 @@ export const properties = pgTable("properties", {
   type: text("type").notNull(), // apartment, house, condo, etc.
   availableFrom: timestamp("available_from"),
   isAvailable: boolean("is_available").default(true).notNull(),
+  approvalStatus: text("approval_status").default("pending").notNull(), // pending, approved, rejected
   ownerId: integer("owner_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

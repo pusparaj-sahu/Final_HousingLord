@@ -178,21 +178,21 @@ export default function PropertyShowcase() {
               data-aos="fade-up"
               className="bg-background/20 hover:bg-background/40 rounded-xl overflow-hidden border border-primary/10 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/10 group"
             >
-              <div className="relative overflow-hidden h-64">
+              <div className="relative overflow-hidden aspect-[4/3]">
                 {property.images && property.images.length > 0 ? (
                   <img 
                     src={getImageUrl(property.images[0])}
                     alt={property.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                       const placeholder = document.createElement('div');
                       target.parentNode?.insertBefore(placeholder, target);
-                      const placeholderComponent = document.createElement('div');
-                      placeholder.className = 'w-full h-full';
-                      placeholderComponent.innerHTML = '<div class="w-full h-full bg-gray-700 flex items-center justify-center"><FaHome className="w-12 h-12 text-gray-500" /></div>';
-                      placeholder.appendChild(placeholderComponent);
+                      placeholder.className = 'w-full h-full bg-gray-700 flex items-center justify-center';
+                      placeholder.innerHTML = '<FaHome className="w-12 h-12 text-gray-500" />';
                     }}
                   />
                 ) : (
@@ -200,40 +200,41 @@ export default function PropertyShowcase() {
                 )}
                 
                 {property.featured && (
-                  <div className="absolute top-4 left-4 bg-primary text-black px-3 py-1 rounded-full text-sm font-bold">
+                  <div className="absolute top-4 left-4 bg-primary text-black px-3 py-1 rounded-full text-sm font-bold z-10">
                     Featured
                   </div>
                 )}
-                
-                <div className="absolute top-4 right-4 bg-background/70 backdrop-blur-sm text-primary px-3 py-1 rounded-full text-sm font-bold">
-                  ₹{property.price?.toLocaleString() || 0}/mo
-                </div>
               </div>
 
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">{property.title}</h3>
-                <p className="text-white/70 mb-4">
-                  {property.location?.city}, {property.location?.state}
-                </p>
-                
-                <div className="flex justify-between items-center text-sm text-white/60 mb-4">
-                  <div>
-                    <span className="font-semibold">{property.bedrooms}</span> Beds
-                  </div>
-                  <div>
-                    <span className="font-semibold">{property.bathrooms}</span> Baths
-                  </div>
-                  <div>
-                    <span className="font-semibold">{property.size}</span> sqft
-                  </div>
+              <div className="p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 line-clamp-2">{property.title}</h3>
+                <p className="text-primary font-bold text-lg sm:text-xl mb-2">₹{property.price?.toLocaleString()}/mo</p>
+                <div className="flex flex-wrap gap-2 text-sm text-white/70 mb-3">
+                  <span className="flex items-center gap-1">
+                    <i className="fas fa-bed"></i>
+                    {property.bedrooms} beds
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <i className="fas fa-bath"></i>
+                    {property.bathrooms} baths
+                  </span>
+                  {property.size && (
+                    <span className="flex items-center gap-1">
+                      <i className="fas fa-ruler-combined"></i>
+                      {property.size} sq ft
+                    </span>
+                  )}
                 </div>
-
-                <button
-                  onClick={() => setSelectedProperty(property)}
-                  className="w-full bg-transparent border border-primary text-primary py-2 rounded-lg font-semibold hover:bg-primary hover:text-black transition-colors"
-                >
-                  View Details
-                </button>
+                <p className="text-white/70 text-sm line-clamp-2 mb-4">{property.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60 text-sm">{property.location?.city}, {property.location?.state}</span>
+                  <button 
+                    onClick={() => setSelectedProperty(property)}
+                    className="bg-primary text-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+                  >
+                    View Details
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -257,24 +258,27 @@ export default function PropertyShowcase() {
         />
       )}
 
-      {/* Image Popup Modal */}
+      {/* Image Popup Modal with improved responsiveness */}
       {selectedImage && (
         <div 
-          className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 sm:p-6 md:p-8"
           onClick={() => setSelectedImage(null)}
         >
           <button 
-            className="absolute top-4 right-4 text-white/70 hover:text-white"
+            className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/50 p-2 rounded-full"
             onClick={() => setSelectedImage(null)}
           >
-            <FaTimes className="w-8 h-8" />
+            <FaTimes className="w-6 h-6 sm:w-8 sm:h-8" />
           </button>
-          <img 
-            src={selectedImage} 
-            alt="Property" 
-            className="max-w-full max-h-[90vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center">
+            <img 
+              src={selectedImage} 
+              alt="Property" 
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+              loading="eager"
+            />
+          </div>
         </div>
       )}
     </section>

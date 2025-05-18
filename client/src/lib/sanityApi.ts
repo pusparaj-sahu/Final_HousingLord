@@ -25,7 +25,8 @@ export const serverClient = createClient({
   projectId: 'ogyoe0hr',
   dataset: 'production',
   apiVersion: '2025-04-03',
-  token: import.meta.env.VITE_SANITY_TOKEN,
+  // Editor token for full permissions
+  token: 'skUUE01jpqseamiAtoni326efjYmv89AooBbHOHluCgqjd4sfC5fmpnDkOhdt3wlykRMLVvC0vnn6eEuSGDbDOhPNzTxKrrfwH3LZPdUIHL1vILkYiRcv8fugzWNjaoD38LDM6mLnO88pbHEhl1AqtrgyZEV5rvHBK0vZoJ5EhLODean9KE6',
   useCdn: false,
 });
 

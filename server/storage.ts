@@ -33,6 +33,7 @@ export interface IStorage {
   createProperty(property: InsertProperty): Promise<Property>;
   updateProperty(id: number, property: Partial<InsertProperty>): Promise<Property | undefined>;
   deleteProperty(id: number): Promise<boolean>;
+  approveProperty(id: number): Promise<Property | undefined>;
   
   // Property Image methods
   getPropertyImages(propertyId: number): Promise<PropertyImage[]>;
@@ -166,6 +167,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.id, id))
       .returning();
     return updatedProperty || undefined;
+  }
+
+  async approveProperty(id: number): Promise<Property | undefined> {
+    const [approvedProperty] = await db
+      .update(properties)
+      .set({ approvalStatus: 'approved', updatedAt: new Date() })
+      .where(eq(properties.id, id))
+      .returning();
+    return approvedProperty || undefined;
   }
 
   async deleteProperty(id: number): Promise<boolean> {

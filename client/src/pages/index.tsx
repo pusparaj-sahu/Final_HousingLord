@@ -7,6 +7,7 @@ import ContactSection from "../components/ContactSection";
 import WhyChooseHousingLord from "../components/WhyChooseHousingLord";
 import TransparentPricing from "../components/TransparentPricing";
 import { useEffect } from "react";
+import PropertyForm from './PropertyForm';
 
 export default function HomePage() {
   // Initialize AOS animations on component mount

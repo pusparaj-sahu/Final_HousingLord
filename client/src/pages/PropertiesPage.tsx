@@ -3,6 +3,7 @@ import { client } from '../lib/sanityClient';
 import { getImageUrl } from '../lib/imageUtils';
 import { FaBed, FaBath, FaRulerCombined, FaSearch, FaTimes } from 'react-icons/fa';
 import PlaceholderImage from '../components/PlaceholderImage';
+import { sanityClient } from '../lib/sanityClient';
 
 interface Property {
   _id: string;
@@ -13,6 +14,7 @@ interface Property {
   location: {
     city: string;
     state: string;
+    country: string;
   };
   price: number;
   bedrooms: number;
@@ -23,6 +25,10 @@ interface Property {
   propertyType: string;
   description: string;
   featured: boolean;
+  owner: {
+    name: string;
+    email: string;
+  };
 }
 
 interface Filters {
@@ -46,6 +52,7 @@ const PropertiesPage = () => {
     priceRange: '',
     furnishing: ''
   });
+  const [error, setError] = useState<string | null>(null);
 
   const locations = ['Bhubaneswar', 'Puri', 'Cuttack'];
   const propertyTypes = ['apartment', 'house', 'villa', 'commercial'];
@@ -58,38 +65,34 @@ const PropertiesPage = () => {
   ];
 
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchApproved = async () => {
+      setLoading(true);
       try {
-        const query = `*[_type == "property"] {
+        const result = await sanityClient.fetch(`*[_type == "property" && location->approved == true]{
           _id,
           title,
-          slug,
-          location->{
-            city,
-            state
-          },
+          location->{city, state, country},
+          owner->{name, email},
           price,
+          images,
+          description,
           bedrooms,
           bathrooms,
-          size,
-          images,
-          available,
           propertyType,
-          description,
+          size,
+          available,
           featured
-        }`;
-        
-        const result = await client.fetch(query);
+        }`);
         setProperties(result);
         setFilteredProperties(result);
-      } catch (error) {
-        console.error('Error fetching properties:', error);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch properties.');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProperties();
+    fetchApproved();
   }, []);
 
   useEffect(() => {
@@ -241,6 +244,9 @@ const PropertiesPage = () => {
           </select>
         </div>
 
+        {error && <p className="text-red-500">{error}</p>}
+        {properties.length === 0 && !loading ? <p>No approved properties available.</p> : null}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProperties.map((property) => (
             <div 
@@ -272,22 +278,27 @@ const PropertiesPage = () => {
               <div className="p-6">
                 <h3 className="text-xl font-bold text-white mb-2">{property.title}</h3>
                 <p className="text-white/70 mb-4">
-                  {property.location?.city}, {property.location?.state}
+                  {property.location?.city}, {property.location?.state}, {property.location?.country}
                 </p>
                 
                 <div className="flex justify-between items-center text-sm text-white/60 mb-4">
                   <div className="flex items-center">
                     <FaBed className="mr-2" />
-                    <span>{property.bedrooms} Beds</span>
+                    <span>{property.bedrooms} Bedroom{property.bedrooms > 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center">
                     <FaBath className="mr-2" />
-                    <span>{property.bathrooms} Baths</span>
+                    <span>{property.bathrooms} Bathroom{property.bathrooms > 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center">
                     <FaRulerCombined className="mr-2" />
                     <span>{property.size} sqft</span>
                   </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-white/50 mb-2">
+                  <span className="bg-background/30 px-2 py-1 rounded">Type: {property.propertyType}</span>
+                  <span className="bg-background/30 px-2 py-1 rounded">Available: {property.available ? 'Yes' : 'No'}</span>
+                  {property.featured && <span className="bg-primary/80 text-black px-2 py-1 rounded">Featured</span>}
                 </div>
 
                 <button
@@ -354,31 +365,36 @@ const PropertiesPage = () => {
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="text-center p-3 bg-background/40 rounded-lg">
                     <FaBed className="w-6 h-6 mx-auto mb-2 text-primary" />
-                    <span className="text-white/70">{selectedProperty.bedrooms} Beds</span>
+                    <span className="text-white/70">{selectedProperty.bedrooms} Bedroom{selectedProperty.bedrooms > 1 ? 's' : ''}</span>
                   </div>
                   <div className="text-center p-3 bg-background/40 rounded-lg">
                     <FaBath className="w-6 h-6 mx-auto mb-2 text-primary" />
-                    <span className="text-white/70">{selectedProperty.bathrooms} Baths</span>
+                    <span className="text-white/70">{selectedProperty.bathrooms} Bathroom{selectedProperty.bathrooms > 1 ? 's' : ''}</span>
                   </div>
                   <div className="text-center p-3 bg-background/40 rounded-lg">
                     <FaRulerCombined className="w-6 h-6 mx-auto mb-2 text-primary" />
                     <span className="text-white/70">{selectedProperty.size} sqft</span>
                   </div>
                 </div>
-
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-2">Location</h3>
-                  <p className="text-white/70">{selectedProperty.location?.city}, {selectedProperty.location?.state}</p>
+                <div className="flex flex-wrap gap-2 text-xs text-white/50 mb-6">
+                  <span className="bg-background/30 px-2 py-1 rounded">Type: {selectedProperty.propertyType}</span>
+                  <span className="bg-background/30 px-2 py-1 rounded">Available: {selectedProperty.available ? 'Yes' : 'No'}</span>
+                  {selectedProperty.featured && <span className="bg-primary/80 text-black px-2 py-1 rounded">Featured</span>}
                 </div>
 
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-2">Property Type</h3>
-                  <p className="text-white/70 capitalize">{selectedProperty.propertyType}</p>
+                  <h3 className="text-lg font-semibold text-white mb-2">Location</h3>
+                  <p className="text-white/70">{selectedProperty.location?.city}, {selectedProperty.location?.state}, {selectedProperty.location?.country}</p>
                 </div>
 
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
                   <p className="text-white/70">{selectedProperty.description}</p>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-2">Owner</h3>
+                  <p className="text-white/70">{selectedProperty.owner?.name}</p>
                 </div>
 
                 <button className="w-full bg-primary text-black py-3 rounded-lg font-bold hover:bg-primary/90 transition-colors">

@@ -10,7 +10,7 @@ export const sanityClient = createClient({
   useCdn: true, // Enable CDN for better performance
   apiVersion: '2024-03-12', // Current date for API version
   // Public client doesn't need a token for read-only operations
-  token: undefined
+  token: import.meta.env.VITE_SANITY_API_TOKEN || 'skUUE01jpqseamiAtoni326efjYmv89AooBbHOHluCgqjd4sfC5fmpnDkOhdt3wlykRMLVvC0vnn6eEuSGDbDOhPNzTxKrrfwH3LZPdUIHL1vILkYiRcv8fugzWNjaoD38LDM6mLnO88pbHEhl1AqtrgyZEV5rvHBK0vZoJ5EhLODean9KE6',
 })
 
 // Export client as an alias for sanityClient
@@ -107,4 +107,21 @@ export async function updateProperty(_id: string, updates: any) {
     console.error('Error updating property:', error);
     throw error;
   }
+}
+
+// Helper to upload an image file to Sanity and return the asset reference
+export async function uploadImageToSanity(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('/api/upload-image', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload image to Sanity');
+  }
+
+  return await response.json();
 }
