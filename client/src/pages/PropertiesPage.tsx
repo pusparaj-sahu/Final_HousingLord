@@ -4,6 +4,7 @@ import { getImageUrl } from '../lib/imageUtils';
 import { FaBed, FaBath, FaRulerCombined, FaSearch, FaTimes } from 'react-icons/fa';
 import PlaceholderImage from '../components/PlaceholderImage';
 import { sanityClient } from '../lib/sanityClient';
+import PropertyCard from '../components/PropertyCard';
 
 interface Property {
   _id: string;
@@ -26,6 +27,7 @@ interface Property {
   description: string;
   featured: boolean;
   owner: {
+    _id: string;
     name: string;
     email: string;
   };
@@ -64,6 +66,9 @@ const PropertiesPage = () => {
     { label: '₹50,000+', min: 50000, max: Infinity }
   ];
 
+  // Mock currentUser for demonstration - replace with your actual auth context
+  const currentUser = { id: '1', role: 'tenant' }; // Use string for id
+
   useEffect(() => {
     const fetchApproved = async () => {
       setLoading(true);
@@ -72,7 +77,7 @@ const PropertiesPage = () => {
           _id,
           title,
           location->{city, state, country},
-          owner->{name, email},
+          owner->{name, email, _id},
           price,
           images,
           description,
@@ -397,9 +402,52 @@ const PropertiesPage = () => {
                   <p className="text-white/70">{selectedProperty.owner?.name}</p>
                 </div>
 
-                <button className="w-full bg-primary text-black py-3 rounded-lg font-bold hover:bg-primary/90 transition-colors">
-                  Contact Owner
-                </button>
+                {/* Add Interest and View on Map buttons directly in the property details */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <button 
+                    onClick={() => {
+                      // Add your interest logic here
+                      alert(`You've shown interest in ${selectedProperty.title}`);
+                      // You can call your API to register interest here
+                    }}
+                    className="w-full bg-primary text-black py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+                  >
+                    I'm Interested
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Navigate to map view with this property highlighted
+                      window.open(`/map?property=${selectedProperty._id}`, '_blank');
+                    }}
+                    className="w-full bg-transparent border border-primary text-primary py-3 rounded-lg font-semibold hover:bg-primary hover:text-black transition-colors"
+                  >
+                    View on Map
+                  </button>
+                </div>
+
+                {/* You can keep the PropertyCard component if it has other functionality you need */}
+                {selectedProperty && (
+                  <PropertyCard
+                    title={selectedProperty.title}
+                    location={`${selectedProperty.location?.city}, ${selectedProperty.location?.state}, ${selectedProperty.location?.country}`}
+                    price={selectedProperty.price}
+                    beds={selectedProperty.bedrooms}
+                    baths={selectedProperty.bathrooms}
+                    sqft={selectedProperty.size}
+                    imageUrl={selectedProperty.images && selectedProperty.images.length > 0 
+                      ? getImageUrl(selectedProperty.images[0]) 
+                      : "/placeholder-property.jpg"}
+                    amenities={[]}
+                    slug={selectedProperty.slug?.current || ''}
+                    available={selectedProperty.available}
+                    propertyId={selectedProperty._id}
+                    ownerId={selectedProperty.owner._id}
+                    currentUser={currentUser}
+                    hideButtons={true}
+                  />
+                )}
+
               </div>
             </div>
           </div>

@@ -2,33 +2,35 @@ import 'dotenv/config';
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  insertUserSchema, 
-  insertPropertySchema, 
-  insertPropertyImageSchema,
-  insertInquirySchema,
-  insertFavoriteSchema
-} from "@shared/schema";
 import { z } from "zod";
 import multer from 'multer';
 import { serverClient } from '../client/src/lib/sanityApi'; // Adjust path if needed
-import nodemailer from 'nodemailer';
+import { transporter } from '../services/emailService';
+
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Create reusable transporter object using Gmail SMTP
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com', // Replace with your Gmail
-    pass: process.env.EMAIL_PASSWORD || 'your-app-password' // Replace with your Gmail App Password
-  }
-});
+// Temporary mock authentication middleware for development
+function mockAuth(req: any, res: Response, next: Function) {
+  // In production, replace this with real authentication logic
+  req.user = {
+    id: 1, // mock user id
+    username: 'testuser',
+    name: 'Test User',
+    email: 'testuser@example.com',
+    role: 'admin' // or 'tenant', 'landlord'
+  };
+  next();
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Attach mock auth middleware for all routes (for now)
+  app.use(mockAuth);
+
   // User Routes
   app.post('/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      // TODO: Add validation for req.body if needed
+      const userData = req.body;
       const existingUser = await storage.getUserByUsername(userData.username);
       
       if (existingUser) {
@@ -36,8 +38,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const newUser = await storage.createUser(userData);
-      
-      // Don't return the password in the response
       const { password, ...userWithoutPassword } = newUser;
       
       return res.status(201).json(userWithoutPassword);
@@ -113,7 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/properties', async (req: Request, res: Response) => {
     try {
-      const propertyData = insertPropertySchema.parse(req.body);
+      // TODO: Add validation for req.body if needed
+      const propertyData = req.body;
       const newProperty = await storage.createProperty(propertyData);
       return res.status(201).json(newProperty);
     } catch (error) {
@@ -187,10 +188,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Property not found' });
       }
       
-      const imageData = insertPropertyImageSchema.parse({
+      // TODO: Add validation for req.body if needed
+      const imageData = {
         ...req.body,
         propertyId
-      });
+      };
       
       const newImage = await storage.addPropertyImage(imageData);
       return res.status(201).json(newImage);
@@ -236,7 +238,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/favorites/toggle', async (req: Request, res: Response) => {
     try {
-      const favoriteData = insertFavoriteSchema.parse(req.body);
+      // TODO: Add validation for req.body if needed
+      const favoriteData = req.body;
       const result = await storage.toggleFavorite(favoriteData);
       
       // If result is undefined, it means the favorite was removed
@@ -303,7 +306,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/inquiries', async (req: Request, res: Response) => {
     try {
-      const inquiryData = insertInquirySchema.parse(req.body);
+      // TODO: Add validation for req.body if needed
+      const inquiryData = req.body;
       
       // Check if property exists
       const property = await storage.getProperty(inquiryData.propertyId);
@@ -352,6 +356,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Property approval route
+  app.patch('/api/properties/:id/approve', async (req: Request, res: Response) => {
+    try {
+      const propertyId = req.params.id;
+      const property = await serverClient.fetch(`*[_type == "property" && _id == $id][0]{
+        _id,
+        title,
+        "ownerEmail": owner->email,
+        "ownerName": owner->name
+      }`, { id: propertyId });
+
+      if (!property) {
+        return res.status(404).json({ error: 'Property not found' });
+      }
+
+      // Update property status
+      await serverClient.patch(propertyId).set({ approved: true }).commit();
+
+      // Send approval email
+      if (property.ownerEmail) {
+        await sendEmail(property.ownerEmail, {
+          subject: "Your Property Has Been Approved",
+          text: `Dear ${property.ownerName || 'Property Owner'},\n\nYour property "${property.title}" has been approved.\n\nThank you,\nHousing Lord Team`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
+              <h2 style="color: #333; margin-bottom: 20px;">Property Approved</h2>
+              <div style="background-color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="color: #666; line-height: 1.6;">Dear ${property.ownerName || 'Property Owner'},</p>
+                <p style="color: #666; line-height: 1.6;">Your property "${property.title}" has been approved.</p>
+              </div>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                This is an automated message from Housing Lord. Please do not reply to this email.
+              </p>
+            </div>
+          `
+        });
+      }
+
+      return res.status(200).json({ message: 'Property approved successfully' });
+    } catch (error) {
+      console.error('Property approval error:', error);
+      return res.status(500).json({ error: 'Failed to approve property' });
+    }
+  });
+
   // Email notification route
   app.post('/api/notify-owner', async (req: Request, res: Response) => {
     const { email, subject, message } = req.body;
@@ -360,34 +410,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Send mail with defined transport object
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_USER || 'your-email@gmail.com', // sender address
-        to: email, // list of receivers
-        subject: subject, // Subject line
-        text: message, // plain text body
-        html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2>${subject}</h2>
-                <p>${message}</p>
-                <hr>
-                <p style="color: #666; font-size: 12px;">This is an automated message from HousingLord.</p>
-              </div>` // html body
+        from: '"Housing Lord" <housinglords@gmail.com>',
+        to: email,
+        subject: subject,
+        text: message,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
+            <h2 style="color: #333; margin-bottom: 20px;">${subject}</h2>
+            <div style="background-color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+              <p style="color: #666; line-height: 1.6;">${message}</p>
+            </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              This is an automated message from Housing Lord. Please do not reply to this email.
+            </p>
+          </div>
+        `
       });
 
-      console.log('Email sent successfully:', info);
-      return res.status(200).json({ 
-        success: true, 
-        messageId: info.messageId,
-        accepted: info.accepted,
-        rejected: info.rejected,
-        response: info.response
-      });
+      console.log('Email sent successfully:', info.messageId);
+      return res.status(200).json({ success: true, messageId: info.messageId });
     } catch (error) {
       console.error('Failed to send email:', error);
       return res.status(500).json({ 
         error: 'Failed to send email', 
-        details: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : null
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -419,37 +467,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin/Owner Approval Route
-  app.patch('/api/properties/:id/approve', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const userId = Number(req.body.userId); // Should be provided in request body or from session
-      if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-      }
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      const property = await storage.getProperty(propertyId);
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      // Only admin or admin-owner can approve
-      if (user.role === 'admin' && property.ownerId === user.id) {
-        const approved = await storage.approveProperty(propertyId);
-        return res.status(200).json(approved);
-      } else if (user.role === 'admin') {
-        const approved = await storage.approveProperty(propertyId);
-        return res.status(200).json(approved);
-      } else {
-        return res.status(403).json({ error: 'Only admin can approve properties' });
-      }
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
+  return createServer(app);
+}
 
-  const httpServer = createServer(app);
-  return httpServer;
+// Helper function for sending emails
+async function sendEmail(to: string, options: { subject: string, text: string, html: string }) {
+  return transporter.sendMail({
+    from: '"Housing Lord" <housinglords@gmail.com>',
+    to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html
+  });
 }

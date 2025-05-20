@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaBed, FaBath } from 'react-icons/fa';
 import { BsGrid3X3 } from 'react-icons/bs';
 import { MdLocationOn } from 'react-icons/md';
 import { Link } from 'react-router-dom';
+// @ts-ignore
+import axios from 'axios';
 
+// Add hideButtons to your props interface
 interface PropertyCardProps {
   title: string;
   location: string;
@@ -15,6 +18,10 @@ interface PropertyCardProps {
   amenities: string[];
   slug: string;
   available: boolean;
+  propertyId: string;
+  ownerId: string;
+  currentUser?: { id: string; role: string } | null;
+  hideButtons?: boolean;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -28,7 +35,38 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   amenities,
   slug,
   available,
+  propertyId,
+  ownerId,
+  currentUser,
 }) => {
+  const [interested, setInterested] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentUser && currentUser.id !== ownerId) {
+      axios
+        .get(`/api/properties/${propertyId}/interested-users`)
+        .then((res: any) => {
+          setInterested(res.data.some((u: any) => u.id === currentUser.id));
+        })
+        .catch(() => setInterested(false));
+    }
+  }, [propertyId, currentUser, ownerId]);
+
+  const handleInterest = async () => {
+    setLoading(true);
+    try {
+      await axios.post(`/api/properties/${propertyId}/interested`);
+      setInterested(true);
+    } catch (e) {
+      // handle error
+    }
+    setLoading(false);
+  };
+
+  const showInterestButton =
+    currentUser && currentUser.id !== ownerId;
+
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
       <Link to={`/property/${slug}`}>
@@ -83,10 +121,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               <span className="text-gray-600 text-sm">+{amenities.length - 3} more</span>
             )}
           </div>
+          {showInterestButton && (
+            <button
+              className={`mt-4 w-full py-2 rounded ${interested ? 'bg-gray-300 text-gray-600' : 'bg-yellow-400 text-black hover:bg-yellow-500'} font-semibold`}
+              onClick={handleInterest}
+              disabled={interested || loading}
+            >
+              {interested ? "Already Interested" : loading ? "Submitting..." : "I'm Interested"}
+            </button>
+          )}
         </div>
       </Link>
     </div>
   );
 };
 
-export default PropertyCard; 
+export default PropertyCard;

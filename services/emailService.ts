@@ -1,24 +1,35 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { Transporter } from 'nodemailer';
+import 'dotenv/config';
 
-// Create a transporter using environment variables
-const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+interface ApprovalEmailData {
+  propertyTitle: string;
+  ownerName: string;
+  approvalDate: string;
+  dashboardLink: string;
+}
+
+const transporter: Transporter = nodemailer.createTransport({
+  service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+    user: 'housinglords@gmail.com',
+    pass: 'bzgtfwsdxucemgvx'
   }
 });
 
-/**
- * Send property approval notification email to property owner
- * @param {string} recipientEmail - Owner's email address
- * @param {Object} data - Data for email template
- */
-const sendApprovalEmail = async (recipientEmail, data) => {
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('SMTP connection error:', error);
+  } else {
+    console.log('SMTP server is ready to take our messages');
+  }
+});
+
+const sendApprovalEmail = async (recipientEmail: string, data: ApprovalEmailData): Promise<boolean> => {
   const { propertyTitle, ownerName, approvalDate, dashboardLink } = data;
+  console.log('Sending email to:', recipientEmail);
   
   const mailOptions = {
-    from: `"Housing Lord" <${process.env.EMAIL_USER}>`,
+    from: '"Housing Lord" <housinglords@gmail.com>',
     to: recipientEmail,
     subject: `Your Property "${propertyTitle}" Has Been Approved!`,
     html: `
@@ -56,4 +67,5 @@ const sendApprovalEmail = async (recipientEmail, data) => {
   }
 };
 
-export default sendApprovalEmail;
+export { transporter };
+export default sendApprovalEmail; 
