@@ -5,6 +5,7 @@ import { FaBed, FaBath, FaRulerCombined, FaSearch, FaTimes } from 'react-icons/f
 import PlaceholderImage from '../components/PlaceholderImage';
 import { sanityClient } from '../lib/sanityClient';
 import PropertyCard from '../components/PropertyCard';
+import { InterestButton } from '../components/InterestButton';
 
 interface Property {
   _id: string;
@@ -404,20 +405,12 @@ const PropertiesPage = () => {
 
                 {/* Add Interest and View on Map buttons directly in the property details */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <button 
-                    onClick={() => {
-                      // Add your interest logic here
-                      alert(`You've shown interest in ${selectedProperty.title}`);
-                      // You can call your API to register interest here
-                    }}
-                    className="w-full bg-primary text-black py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-                  >
-                    I'm Interested
-                  </button>
-                  
+                  <InterestButton 
+                    propertyId={selectedProperty._id} 
+                    ownerId={selectedProperty.owner._id} 
+                  />
                   <button
                     onClick={() => {
-                      // Navigate to map view with this property highlighted
                       window.open(`/map?property=${selectedProperty._id}`, '_blank');
                     }}
                     className="w-full bg-transparent border border-primary text-primary py-3 rounded-lg font-semibold hover:bg-primary hover:text-black transition-colors"
@@ -427,26 +420,7 @@ const PropertiesPage = () => {
                 </div>
 
                 {/* You can keep the PropertyCard component if it has other functionality you need */}
-                {selectedProperty && (
-                  <PropertyCard
-                    title={selectedProperty.title}
-                    location={`${selectedProperty.location?.city}, ${selectedProperty.location?.state}, ${selectedProperty.location?.country}`}
-                    price={selectedProperty.price}
-                    beds={selectedProperty.bedrooms}
-                    baths={selectedProperty.bathrooms}
-                    sqft={selectedProperty.size}
-                    imageUrl={selectedProperty.images && selectedProperty.images.length > 0 
-                      ? getImageUrl(selectedProperty.images[0]) 
-                      : "/placeholder-property.jpg"}
-                    amenities={[]}
-                    slug={selectedProperty.slug?.current || ''}
-                    available={selectedProperty.available}
-                    propertyId={selectedProperty._id}
-                    ownerId={selectedProperty.owner._id}
-                    currentUser={currentUser}
-                    hideButtons={true}
-                  />
-                )}
+                {/* Removed PropertyCard from modal to avoid duplicate InterestButton */}
 
               </div>
             </div>

@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { FaBed, FaBath } from 'react-icons/fa';
 import { BsGrid3X3 } from 'react-icons/bs';
 import { MdLocationOn } from 'react-icons/md';
 import { Link } from 'react-router-dom';
-// @ts-ignore
-import axios from 'axios';
+import { InterestButton } from './InterestButton';
 
-// Add hideButtons to your props interface
 interface PropertyCardProps {
   title: string;
   location: string;
@@ -21,7 +19,6 @@ interface PropertyCardProps {
   propertyId: string;
   ownerId: string;
   currentUser?: { id: string; role: string } | null;
-  hideButtons?: boolean;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -39,34 +36,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   ownerId,
   currentUser,
 }) => {
-  const [interested, setInterested] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (currentUser && currentUser.id !== ownerId) {
-      axios
-        .get(`/api/properties/${propertyId}/interested-users`)
-        .then((res: any) => {
-          setInterested(res.data.some((u: any) => u.id === currentUser.id));
-        })
-        .catch(() => setInterested(false));
-    }
-  }, [propertyId, currentUser, ownerId]);
-
-  const handleInterest = async () => {
-    setLoading(true);
-    try {
-      await axios.post(`/api/properties/${propertyId}/interested`);
-      setInterested(true);
-    } catch (e) {
-      // handle error
-    }
-    setLoading(false);
-  };
-
-  const showInterestButton =
-    currentUser && currentUser.id !== ownerId;
-
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
       <Link to={`/property/${slug}`}>
@@ -85,14 +54,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             </div>
           )}
         </div>
-        
         <div className="p-6">
           <h2 className="text-2xl font-semibold mb-2">{title}</h2>
           <div className="flex items-center text-gray-600 mb-4">
             <MdLocationOn className="mr-1" />
             <span>{location}</span>
           </div>
-          
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <FaBed className="mr-2" />
@@ -107,7 +74,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               <span>{sqft} Sq.ft</span>
             </div>
           </div>
-          
           <div className="flex flex-wrap gap-2">
             {amenities.slice(0, 3).map((amenity, index) => (
               <span
@@ -121,15 +87,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               <span className="text-gray-600 text-sm">+{amenities.length - 3} more</span>
             )}
           </div>
-          {showInterestButton && (
-            <button
-              className={`mt-4 w-full py-2 rounded ${interested ? 'bg-gray-300 text-gray-600' : 'bg-yellow-400 text-black hover:bg-yellow-500'} font-semibold`}
-              onClick={handleInterest}
-              disabled={interested || loading}
-            >
-              {interested ? "Already Interested" : loading ? "Submitting..." : "I'm Interested"}
-            </button>
-          )}
+          <div className="mt-4">
+            <InterestButton propertyId={propertyId} ownerId={ownerId} />
+          </div>
         </div>
       </Link>
     </div>

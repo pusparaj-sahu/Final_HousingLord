@@ -1,13 +1,54 @@
 import 'dotenv/config';
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
 import { z } from "zod";
 import multer from 'multer';
 import { serverClient } from '../client/src/lib/sanityApi'; // Adjust path if needed
-import { transporter } from '../services/emailService';
+import express from 'express';
+import nodemailer from 'nodemailer';
+import fetch from 'node-fetch';
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: 'housinglords@gmail.com',
+    pass: 'bzgtfwsdxucemgvx'
+  }
+});
+
+// Verify transporter configuration on startup
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error('Email transporter verification failed:', error);
+  } else {
+    console.log('Email transporter is ready to send messages');
+  }
+});
+
+// Helper function to send email with retry
+async function sendEmailWithRetry(mailOptions: any, maxRetries = 3) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email sent successfully:', info.messageId);
+      return info;
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${i + 1} failed:`, error);
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+  throw lastError;
+}
 
 // Temporary mock authentication middleware for development
 function mockAuth(req: any, res: Response, next: Function) {
@@ -26,340 +67,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Attach mock auth middleware for all routes (for now)
   app.use(mockAuth);
 
-  // User Routes
-  app.post('/api/auth/register', async (req: Request, res: Response) => {
-    try {
-      // TODO: Add validation for req.body if needed
-      const userData = req.body;
-      const existingUser = await storage.getUserByUsername(userData.username);
-      
-      if (existingUser) {
-        return res.status(400).json({ error: 'Username already exists' });
-      }
-      
-      const newUser = await storage.createUser(userData);
-      const { password, ...userWithoutPassword } = newUser;
-      
-      return res.status(201).json(userWithoutPassword);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.post('/api/auth/login', async (req: Request, res: Response) => {
-    try {
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required' });
-      }
-      
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user || user.password !== password) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-      
-      // Don't return the password in the response
-      const { password: _, ...userWithoutPassword } = user;
-      
-      // In a real app, you would set up sessions or JWT here
-      return res.status(200).json(userWithoutPassword);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  // Property Routes
-  app.get('/api/properties', async (req: Request, res: Response) => {
-    try {
-      const filters = {
-        type: req.query.type as string | undefined,
-        minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
-        maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
-        bedrooms: req.query.bedrooms ? Number(req.query.bedrooms) : undefined,
-        bathrooms: req.query.bathrooms ? Number(req.query.bathrooms) : undefined,
-        city: req.query.city as string | undefined,
-        state: req.query.state as string | undefined,
-        isAvailable: req.query.isAvailable !== undefined 
-          ? req.query.isAvailable === 'true' 
-          : undefined
-      };
-      
-      const properties = await storage.getAllProperties(filters);
-      return res.status(200).json(properties);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.get('/api/properties/:id', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const property = await storage.getProperty(propertyId);
-      
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      return res.status(200).json(property);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.post('/api/properties', async (req: Request, res: Response) => {
-    try {
-      // TODO: Add validation for req.body if needed
-      const propertyData = req.body;
-      const newProperty = await storage.createProperty(propertyData);
-      return res.status(201).json(newProperty);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.patch('/api/properties/:id', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const propertyData = req.body;
-      
-      const property = await storage.getProperty(propertyId);
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      const updatedProperty = await storage.updateProperty(propertyId, propertyData);
-      return res.status(200).json(updatedProperty);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.delete('/api/properties/:id', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const property = await storage.getProperty(propertyId);
-      
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      const deleted = await storage.deleteProperty(propertyId);
-      if (deleted) {
-        return res.status(204).send();
-      } else {
-        return res.status(500).json({ error: 'Failed to delete property' });
-      }
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-    
-  // Property Images Routes
-  app.get('/api/properties/:id/images', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const property = await storage.getProperty(propertyId);
-      
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      const images = await storage.getPropertyImages(propertyId);
-      return res.status(200).json(images);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.post('/api/properties/:id/images', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const property = await storage.getProperty(propertyId);
-      
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      // TODO: Add validation for req.body if needed
-      const imageData = {
-        ...req.body,
-        propertyId
-      };
-      
-      const newImage = await storage.addPropertyImage(imageData);
-      return res.status(201).json(newImage);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.delete('/api/property-images/:id', async (req: Request, res: Response) => {
-    try {
-      const imageId = Number(req.params.id);
-      const deleted = await storage.deletePropertyImage(imageId);
-      
-      if (deleted) {
-        return res.status(204).send();
-      } else {
-        return res.status(404).json({ error: 'Image not found' });
-      }
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  // Favorites Routes
-  app.get('/api/users/:id/favorites', async (req: Request, res: Response) => {
-    try {
-      const userId = Number(req.params.id);
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      const favorites = await storage.getUserFavorites(userId);
-      return res.status(200).json(favorites);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.post('/api/favorites/toggle', async (req: Request, res: Response) => {
-    try {
-      // TODO: Add validation for req.body if needed
-      const favoriteData = req.body;
-      const result = await storage.toggleFavorite(favoriteData);
-      
-      // If result is undefined, it means the favorite was removed
-      return res.status(200).json({ 
-        isFavorite: !!result,
-        favorite: result 
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.get('/api/favorites/check', async (req: Request, res: Response) => {
-    try {
-      const userId = Number(req.query.userId);
-      const propertyId = Number(req.query.propertyId);
-      
-      if (!userId || !propertyId) {
-        return res.status(400).json({ error: 'User ID and Property ID are required' });
-      }
-      
-      const isFavorite = await storage.isFavorite(userId, propertyId);
-      return res.status(200).json({ isFavorite });
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  // Inquiry Routes
-  app.get('/api/properties/:id/inquiries', async (req: Request, res: Response) => {
-    try {
-      const propertyId = Number(req.params.id);
-      const property = await storage.getProperty(propertyId);
-      
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      const inquiries = await storage.getInquiriesByProperty(propertyId);
-      return res.status(200).json(inquiries);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.get('/api/users/:id/inquiries', async (req: Request, res: Response) => {
-    try {
-      const userId = Number(req.params.id);
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      const inquiries = await storage.getInquiriesByUser(userId);
-      return res.status(200).json(inquiries);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.post('/api/inquiries', async (req: Request, res: Response) => {
-    try {
-      // TODO: Add validation for req.body if needed
-      const inquiryData = req.body;
-      
-      // Check if property exists
-      const property = await storage.getProperty(inquiryData.propertyId);
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
-      
-      // Check if user exists
-      const user = await storage.getUser(inquiryData.userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      const newInquiry = await storage.createInquiry(inquiryData);
-      return res.status(201).json(newInquiry);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-  app.patch('/api/inquiries/:id/status', async (req: Request, res: Response) => {
-    try {
-      const inquiryId = Number(req.params.id);
-      const { status } = req.body;
-      
-      if (!status) {
-        return res.status(400).json({ error: 'Status is required' });
-      }
-      
-      if (!['pending', 'replied', 'closed'].includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
-      }
-      
-      const updatedInquiry = await storage.updateInquiryStatus(inquiryId, status);
-      
-      if (!updatedInquiry) {
-        return res.status(404).json({ error: 'Inquiry not found' });
-      }
-      
-      return res.status(200).json(updatedInquiry);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
+  // Only keep endpoints that are functional with Sanity/Clerk
 
-  // Property approval route
+  // Property approval route (uses Sanity)
   app.patch('/api/properties/:id/approve', async (req: Request, res: Response) => {
     try {
       const propertyId = req.params.id;
+      console.log('Processing property approval for ID:', propertyId);
+
       const property = await serverClient.fetch(`*[_type == "property" && _id == $id][0]{
         _id,
         title,
@@ -368,31 +83,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }`, { id: propertyId });
 
       if (!property) {
+        console.error('Property not found:', propertyId);
         return res.status(404).json({ error: 'Property not found' });
       }
 
-      // Update property status
-      await serverClient.patch(propertyId).set({ approved: true }).commit();
+      console.log('Found property:', {
+        id: property._id,
+        title: property.title,
+        ownerEmail: property.ownerEmail,
+        ownerName: property.ownerName
+      });
 
-      // Send approval email
+      // First update the property status
+      await serverClient.patch(propertyId).set({ approved: true }).commit();
+      console.log('Property status updated to approved');
+
+      // Then send the email notification
       if (property.ownerEmail) {
-        await sendEmail(property.ownerEmail, {
-          subject: "Your Property Has Been Approved",
-          text: `Dear ${property.ownerName || 'Property Owner'},\n\nYour property "${property.title}" has been approved.\n\nThank you,\nHousing Lord Team`,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
+        try {
+          console.log('Preparing to send approval email to:', property.ownerEmail);
+          
+          const mailOptions = {
+            from: '"Housing Lord" <housinglords@gmail.com>',
+            to: property.ownerEmail,
+            subject: "Your Property Has Been Approved",
+            text: `Dear ${property.ownerName || 'Property Owner'},\n\nYour property \"${property.title}\" has been approved.\n\nThank you,\nHousing Lord Team`,
+            html: `<div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
               <h2 style="color: #333; margin-bottom: 20px;">Property Approved</h2>
               <div style="background-color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
                 <p style="color: #666; line-height: 1.6;">Dear ${property.ownerName || 'Property Owner'},</p>
-                <p style="color: #666; line-height: 1.6;">Your property "${property.title}" has been approved.</p>
+                <p style="color: #666; line-height: 1.6;">Your property \"${property.title}\" has been approved.</p>
               </div>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-              <p style="color: #999; font-size: 12px; text-align: center;">
-                This is an automated message from Housing Lord. Please do not reply to this email.
-              </p>
-            </div>
-          `
-        });
+              <p style="color: #999; font-size: 12px; text-align: center;">This is an automated message from Housing Lord. Please do not reply to this email.</p>
+            </div>`
+          };
+
+          const info = await sendEmailWithRetry(mailOptions);
+          console.log('Property approval email sent successfully:', info.messageId);
+        } catch (emailError) {
+          console.error('Failed to send property approval email:', emailError);
+          if (emailError instanceof Error) {
+            console.error('Email error details:', {
+              message: emailError.message,
+              stack: emailError.stack,
+              name: emailError.name
+            });
+          }
+        }
+      } else {
+        console.warn('No owner email found for property:', propertyId);
       }
 
       return res.status(200).json({ message: 'Property approved successfully' });
@@ -402,81 +142,313 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Email notification route
-  app.post('/api/notify-owner', async (req: Request, res: Response) => {
-    const { email, subject, message } = req.body;
-    if (!email || !subject || !message) {
-      return res.status(400).json({ error: 'Missing email, subject, or message' });
-    }
-
+  // Email notification route (for admin/owner notification)
+  app.post('/api/notify-interest', async (req: Request, res: Response) => {
+    const { propertyId, userId } = req.body;
     try {
-      const info = await transporter.sendMail({
-        from: '"Housing Lord" <housinglords@gmail.com>',
-        to: email,
-        subject: subject,
-        text: message,
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
-            <h2 style="color: #333; margin-bottom: 20px;">${subject}</h2>
-            <div style="background-color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
-              <p style="color: #666; line-height: 1.6;">${message}</p>
-            </div>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #999; font-size: 12px; text-align: center;">
-              This is an automated message from Housing Lord. Please do not reply to this email.
-            </p>
-          </div>
-        `
+      // Fetch user data from Clerk
+      const userRes = await fetch(`https://api.clerk.dev/v1/users/${userId}`, {
+        headers: { Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}` },
+      });
+      const userRaw = await userRes.json();
+      const user = typeof userRaw === 'object' && userRaw !== null ? userRaw : {};
+      const userFirstName = 'first_name' in user ? user.first_name : '';
+      const userLastName = 'last_name' in user ? user.last_name : '';
+      const userEmail = 'email_address' in user ? user.email_address : '';
+      let userPhone = 'N/A';
+      if ('phone_numbers' in user && Array.isArray((user as any).phone_numbers) && (user as any).phone_numbers[0] && typeof (user as any).phone_numbers[0].phone_number === 'string') {
+        userPhone = (user as any).phone_numbers[0].phone_number;
+      }
+
+      // Fetch property data from Sanity
+      const query = `*[_type=='property' && _id==$id][0]{title,owner->{email,name}}`;
+      const sanityRes = await fetch(
+        `https://${process.env.SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${process.env.SANITY_DATASET}?query=${encodeURIComponent(query)}&$id=${propertyId}`,
+        {
+          headers: { Authorization: `Bearer ${process.env.SANITY_TOKEN}` },
+        }
+      );
+      const sanityDataRaw = await sanityRes.json();
+      const sanityData = typeof sanityDataRaw === 'object' && sanityDataRaw !== null ? sanityDataRaw : {};
+      const property = 'result' in sanityData && typeof sanityData.result === 'object' && sanityData.result !== null ? sanityData.result : {};
+      const propertyTitle = 'title' in property ? property.title : '';
+      const owner = 'owner' in property && typeof property.owner === 'object' && property.owner !== null ? property.owner : {};
+      const ownerName = 'name' in owner ? owner.name : '';
+      const ownerEmail = 'email' in owner ? owner.email : '';
+
+      // Compose email
+      const message = `
+        <h2>New Interest in Property: ${propertyTitle}</h2>
+        <p><strong>User:</strong> ${userFirstName} ${userLastName} (${userEmail})</p>
+        <p><strong>Phone:</strong> ${userPhone}</p>
+        <p><strong>Property:</strong> ${propertyTitle}</p>
+        <p><strong>Owner:</strong> ${ownerName} (${ownerEmail})</p>
+      `;
+
+      // Send email to owner and admin
+      const recipientsArr = [ownerEmail, process.env.ADMIN_EMAIL].filter((v): v is string => typeof v === 'string' && v.length > 0);
+      const recipients = recipientsArr.length === 1 ? recipientsArr[0] : recipientsArr;
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: recipients,
+        subject: 'New Interest in Your Property',
+        html: message,
       });
 
-      console.log('Email sent successfully:', info.messageId);
-      return res.status(200).json({ success: true, messageId: info.messageId });
-    } catch (error) {
-      console.error('Failed to send email:', error);
-      return res.status(500).json({ 
-        error: 'Failed to send email', 
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
+      res.status(200).json({ success: true });
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
     }
   });
 
+  // Image upload route (Sanity)
   app.post('/api/upload-image', upload.single('file'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
-        console.error('No file uploaded');
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      console.log('File received:', req.file.originalname, req.file.mimetype, req.file.size);
       const buffer = req.file.buffer;
       const fileName = req.file.originalname;
-      console.log('Buffer length:', buffer.length);
       try {
         const asset = await serverClient.assets.upload('image', buffer, { filename: fileName });
-        console.log('Sanity asset upload success:', asset);
         return res.status(200).json({
           _type: 'image',
           asset: { _type: 'reference', _ref: asset._id }
         });
       } catch (sanityErr: any) {
-        console.error('Sanity upload error:', sanityErr?.message || sanityErr);
         return res.status(500).json({ error: 'Sanity upload error', details: sanityErr?.message || sanityErr });
       }
     } catch (err: any) {
-      console.error('Upload route error:', err);
       return res.status(500).json({ error: 'Failed to upload image to Sanity', details: err?.message || err });
+    }
+  });
+
+  // POST /api/interested: create interest in Sanity, prevent duplicates, store Clerk user info, send email
+  app.post('/api/interested', async (req: Request, res: Response) => {
+    try {
+      const { userId, email, name, phone, propertyId } = req.body;
+      if (!userId || !propertyId) {
+        return res.status(400).json({ error: 'Missing userId or propertyId' });
+      }
+
+      // 1. Check if user exists in Sanity, create if not (use 'clerkId')
+      const userQuery = `*[_type == "user" && clerkId == $userId][0]`;
+      let sanityUser = await serverClient.fetch(userQuery, { userId });
+      if (!sanityUser) {
+        sanityUser = await serverClient.create({
+          _type: 'user',
+          clerkId: userId,
+          name,
+          email,
+          phone,
+        });
+      }
+
+      // 2. Prevent duplicate interest
+      const interestQuery = `*[_type == "interest" && user._ref == $userId && property._ref == $propertyId][0]`;
+      const alreadyInterested = await serverClient.fetch(interestQuery, { userId: sanityUser._id, propertyId });
+      if (alreadyInterested) {
+        return res.status(200).json({ success: false, message: 'Already interested' });
+      }
+
+      // 3. Create interest document in Sanity
+      const interestDoc = await serverClient.create({
+        _type: 'interest',
+        user: { _type: 'reference', _ref: sanityUser._id },
+        property: { _type: 'reference', _ref: propertyId },
+        interestedAt: new Date().toISOString(),
+        name,
+        email,
+        phone,
+      });
+
+      // 4. Send email notification
+      try {
+        const propertyQuery = `*[_type=='property' && _id==$id][0]{title,owner->{email,name}}`;
+        const property = await serverClient.fetch(propertyQuery, { id: propertyId });
+        
+        if (!property) {
+          console.error('Property not found for email notification:', propertyId);
+          return res.status(200).json({ success: true, message: 'Interest recorded but property not found for notification' });
+        }
+
+        const ownerEmail = property?.owner?.email;
+        const ownerName = property?.owner?.name || 'Property Owner';
+        const propertyTitle = property?.title || 'Your Property';
+        const adminEmail = 'housinglords@gmail.com';
+
+        if (!ownerEmail && !adminEmail) {
+          console.error('No recipient emails found for notification');
+          return res.status(200).json({ success: true, message: 'Interest recorded but no email recipients found' });
+        }
+
+        const message = `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
+            <h2 style="color: #333; margin-bottom: 20px;">New Interest in Property: ${propertyTitle}</h2>
+            <div style="background-color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+              <p style="color: #666; line-height: 1.6;"><strong>User:</strong> ${name} (${email})</p>
+              <p style="color: #666; line-height: 1.6;"><strong>Phone:</strong> ${phone}</p>
+              <p style="color: #666; line-height: 1.6;"><strong>Property:</strong> ${propertyTitle}</p>
+              <p style="color: #666; line-height: 1.6;"><strong>Owner:</strong> ${ownerName}</p>
+            </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">This is an automated message from Housing Lord. Please do not reply to this email.</p>
+          </div>
+        `;
+
+        const recipientsArr = [ownerEmail, adminEmail].filter((v): v is string => typeof v === 'string' && v.length > 0);
+        const recipients = recipientsArr.length === 1 ? recipientsArr[0] : recipientsArr;
+
+        const mailOptions = {
+          from: '"Housing Lord" <housinglords@gmail.com>',
+          to: recipients,
+          subject: 'New Interest in Your Property',
+          html: message,
+        };
+
+        console.log('Attempting to send email to:', recipients);
+        try {
+          await sendEmailWithRetry(mailOptions);
+        } catch (emailError) {
+          console.error('All attempts to send email failed:', emailError);
+          // Log detailed error information
+          if (emailError instanceof Error) {
+            console.error('Email error details:', {
+              message: emailError.message,
+              stack: emailError.stack,
+              name: emailError.name
+            });
+          }
+        }
+
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Log detailed error information
+        if (emailError instanceof Error) {
+          console.error('Email error details:', {
+            message: emailError.message,
+            stack: emailError.stack,
+            name: emailError.name
+          });
+        }
+        // Don't fail the whole request if email fails
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.error('Error in /api/interested:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  // Add new endpoint for property owner notification
+  app.post('/api/notify-owner', async (req: Request, res: Response) => {
+    try {
+      const { email, subject, message } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      console.log('Preparing to send notification to owner:', email);
+      
+      const mailOptions = {
+        from: '"Housing Lord" <housinglords@gmail.com>',
+        to: email,
+        subject: subject || 'Property Update',
+        text: message,
+        html: `<div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border-radius: 8px;">
+          <div style="background-color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+            <p style="color: #666; line-height: 1.6;">${message}</p>
+          </div>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">This is an automated message from Housing Lord. Please do not reply to this email.</p>
+        </div>`
+      };
+
+      const info = await sendEmailWithRetry(mailOptions);
+      console.log('Owner notification email sent successfully:', info.messageId);
+      
+      return res.status(200).json({ success: true, messageId: info.messageId });
+    } catch (error) {
+      console.error('Failed to send owner notification:', error);
+      return res.status(500).json({ error: 'Failed to send notification' });
     }
   });
 
   return createServer(app);
 }
 
-// Helper function for sending emails
-async function sendEmail(to: string, options: { subject: string, text: string, html: string }) {
-  return transporter.sendMail({
-    from: '"Housing Lord" <housinglords@gmail.com>',
-    to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html
-  });
-}
+const router = express.Router();
+
+// Add your Clerk and Sanity credentials here
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY||"pk_test_YWNjdXJhdGUtY29icmEtNTkuY2xlcmsuYWNjb3VudHMuZGV2JA";
+const SANITY_PROJECT_ID = process.env.SANITY_PROJECT_ID ||"ogyoe0hr";
+const SANITY_DATASET = process.env.SANITY_DATASET ||"production";
+const SANITY_TOKEN = process.env.SANITY_TOKEN ||"skUUE01jpqseamiAtoni326efjYmv89AooBbHOHluCgqjd4sfC5fmpnDkOhdt3wlykRMLVvC0vnn6eEuSGDbDOhPNzTxKrrfwH3LZPdUIHL1vILkYiRcv8fugzWNjaoD38LDM6mLnO88pbHEhl1AqtrgyZEV5rvHBK0vZoJ5EhLODean9KE6" ;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ||"housinglords@gmail.com";
+
+router.post('/api/notify-interest', async (req, res) => {
+  const { propertyId, userId } = req.body;
+  try {
+    // Fetch user data from Clerk
+    const userRes = await fetch(`https://api.clerk.dev/v1/users/${userId}`, {
+      headers: { Authorization: `Bearer ${CLERK_SECRET_KEY}` },
+    });
+    const userRaw = await userRes.json();
+    const user = typeof userRaw === 'object' && userRaw !== null ? userRaw : {};
+    const userFirstName = 'first_name' in user ? user.first_name : '';
+    const userLastName = 'last_name' in user ? user.last_name : '';
+    const userEmail = 'email_address' in user ? user.email_address : '';
+    let userPhone = 'N/A';
+    if ('phone_numbers' in user && Array.isArray((user as any).phone_numbers) && (user as any).phone_numbers[0] && typeof (user as any).phone_numbers[0].phone_number === 'string') {
+      userPhone = (user as any).phone_numbers[0].phone_number;
+    }
+
+    // Fetch property data from Sanity
+    const query = `*[_type=='property' && _id==$id][0]{title,owner->{email,name}}`;
+    const sanityRes = await fetch(
+      `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${encodeURIComponent(query)}&$id=${propertyId}`,
+      {
+        headers: { Authorization: `Bearer ${SANITY_TOKEN}` },
+        method: 'POST',
+        body: JSON.stringify({ params: { id: propertyId } }),
+      }
+    );
+    const sanityDataRaw = await sanityRes.json();
+    const sanityData = typeof sanityDataRaw === 'object' && sanityDataRaw !== null ? sanityDataRaw : {};
+    const property = 'result' in sanityData && typeof sanityData.result === 'object' && sanityData.result !== null ? sanityData.result : {};
+    const propertyTitle = 'title' in property ? property.title : '';
+    const owner = 'owner' in property && typeof property.owner === 'object' && property.owner !== null ? property.owner : {};
+    const ownerName = 'name' in owner ? owner.name : '';
+    const ownerEmail = 'email' in owner ? owner.email : '';
+
+    // Compose email
+    const message = `
+      <h2>New Interest in Property: ${propertyTitle}</h2>
+      <p><strong>User:</strong> ${userFirstName} ${userLastName} (${userEmail})</p>
+      <p><strong>Phone:</strong> ${userPhone}</p>
+      <p><strong>Property:</strong> ${propertyTitle}</p>
+      <p><strong>Owner:</strong> ${ownerName} (${ownerEmail})</p>
+    `;
+
+    // Send email to owner and admin
+    const recipientsArr = [ownerEmail, ADMIN_EMAIL].filter((v): v is string => typeof v === 'string' && v.length > 0);
+    const recipients = recipientsArr.length === 1 ? recipientsArr[0] : recipientsArr;
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: recipients,
+      subject: 'New Interest in Your Property',
+      html: message,
+    });
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: errorMsg });
+  }
+});
+
+export default router;
