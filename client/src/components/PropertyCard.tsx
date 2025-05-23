@@ -77,7 +77,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           <div className="flex flex-wrap gap-2">
             {amenities.slice(0, 3).map((amenity, index) => (
               <span
-                key={index}
+                key={amenity._key || index}
                 className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm"
               >
                 {amenity}

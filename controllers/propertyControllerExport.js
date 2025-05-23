@@ -1,5 +1,6 @@
 import { patch } from "../utils/sanityClient";
 import sendApprovalEmail from "../services/emailService";
+import { v4 as uuidv4 } from "uuid";
 
 const approveProperty = async (req, res) => {
   const { propertyId } = req.body;

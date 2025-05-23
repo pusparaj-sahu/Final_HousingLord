@@ -71,7 +71,7 @@ const PropertySidebar: React.FC<SidebarProps> = ({ property, onClose, onImageCli
             <div className="grid grid-cols-4 gap-2">
               {property.images.slice(1).map((image: any, index: number) => (
                 <img 
-                  key={index}
+                  key={image._key || index}
                   src={getImageUrl(image)}
                   alt={`${property.title} - ${index + 2}`}
                   className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"

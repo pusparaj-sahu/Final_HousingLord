@@ -104,7 +104,10 @@ const PropertyForm = () => {
       // 1. Upload property images
       const propertyImageFiles = Array.from(data.images || []);
       const propertyImages = await Promise.all(
-        propertyImageFiles.map(async (file: File) => await uploadImageToSanity(file))
+        propertyImageFiles.map(async (file: File) => {
+          const asset = await uploadImageToSanity(file);
+          return { ...asset, _key: uuidv4() };
+        })
       );
 
       // 2. Upload owner image (if provided)

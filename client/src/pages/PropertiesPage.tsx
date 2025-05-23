@@ -22,7 +22,13 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   size: number;
-  images: any[];
+  images: {
+    _key: string;
+    asset: {
+      _ref: string;
+      url?: string;
+    };
+  }[];
   available: boolean;
   propertyType: string;
   description: string;
@@ -32,6 +38,8 @@ interface Property {
     name: string;
     email: string;
   };
+  amenities?: string[];
+  targetAudience?: string[];
 }
 
 interface Filters {
@@ -40,6 +48,8 @@ interface Filters {
   bedrooms: string;
   priceRange: string;
   furnishing: string;
+  amenity?: string;
+  targetAudience?: string;
 }
 
 const PropertiesPage = () => {
@@ -53,7 +63,9 @@ const PropertiesPage = () => {
     propertyType: '',
     bedrooms: '',
     priceRange: '',
-    furnishing: ''
+    furnishing: '',
+    amenity: '',
+    targetAudience: ''
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +79,11 @@ const PropertiesPage = () => {
     { label: '₹50,000+', min: 50000, max: Infinity }
   ];
 
+  const allAmenities = [
+    'Parking', 'Security', 'Lift', 'Power Backup', 'Water Supply', 'Gym', 'Swimming Pool', 'Garden', 'Play Area', '24/7 Water Supply', 'Furnished', 'Semi-Furnished', 'Unfurnished', 'Air Conditioning', 'Heating', 'Internet', 'Pet Friendly'
+  ];
+  const allTargetAudiences = ['bachelor', 'family', 'both'];
+
   // Mock currentUser for demonstration - replace with your actual auth context
   const currentUser = { id: '1', role: 'tenant' }; // Use string for id
 
@@ -74,7 +91,7 @@ const PropertiesPage = () => {
     const fetchApproved = async () => {
       setLoading(true);
       try {
-        const result = await sanityClient.fetch(`*[_type == "property" && location->approved == true]{
+        const result = await sanityClient.fetch(`*[_type == 'property' && location->approved == true && !(_id in path('drafts.**'))]{
           _id,
           title,
           location->{city, state, country},
@@ -87,10 +104,14 @@ const PropertiesPage = () => {
           propertyType,
           size,
           available,
-          featured
+          featured,
+          amenities,
+          targetAudience
         }`);
-        setProperties(result);
-        setFilteredProperties(result);
+        // Deduplicate by _id
+        const unique = Array.from(new Map((result as Property[]).map((item: Property) => [item._id, item])).values()) as Property[];
+        setProperties(unique);
+        setFilteredProperties(unique);
         setError(null);
       } catch (err) {
         setError('Failed to fetch properties.');
@@ -129,6 +150,14 @@ const PropertiesPage = () => {
       }
     }
 
+    if (filters.amenity) {
+      filtered = filtered.filter(p => p.amenities && p.amenities.includes(filters.amenity!));
+    }
+
+    if (filters.targetAudience) {
+      filtered = filtered.filter(p => p.targetAudience && p.targetAudience.includes(filters.targetAudience!));
+    }
+
     setFilteredProperties(filtered);
   }, [filters, properties]);
 
@@ -143,7 +172,9 @@ const PropertiesPage = () => {
       propertyType: '',
       bedrooms: '',
       priceRange: '',
-      furnishing: ''
+      furnishing: '',
+      amenity: '',
+      targetAudience: ''
     });
   };
 
@@ -204,6 +235,28 @@ const PropertiesPage = () => {
               <option value="">Budget (₹)</option>
               {priceRanges.map(range => (
                 <option key={range.label} value={range.label}>{range.label}</option>
+              ))}
+            </select>
+
+            <select
+              value={filters.amenity || ''}
+              onChange={(e) => setFilters({ ...filters, amenity: e.target.value })}
+              className="bg-background text-white border border-primary/20 rounded-lg p-3 focus:border-primary outline-none"
+            >
+              <option value="">Select Amenity</option>
+              {allAmenities.map(amenity => (
+                <option key={amenity} value={amenity}>{amenity}</option>
+              ))}
+            </select>
+
+            <select
+              value={filters.targetAudience || ''}
+              onChange={(e) => setFilters({ ...filters, targetAudience: e.target.value })}
+              className="bg-background text-white border border-primary/20 rounded-lg p-3 focus:border-primary outline-none"
+            >
+              <option value="">Target Audience</option>
+              {allTargetAudiences.map(aud => (
+                <option key={aud} value={aud}>{aud.charAt(0).toUpperCase() + aud.slice(1)}</option>
               ))}
             </select>
 
@@ -401,6 +454,36 @@ const PropertiesPage = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-white mb-2">Owner</h3>
                   <p className="text-white/70">{selectedProperty.owner?.name}</p>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-2">Amenities</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProperty.amenities && selectedProperty.amenities.length > 0 ? (
+                      selectedProperty.amenities.map((amenity, idx) => (
+                        <span key={idx} className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-semibold">
+                          {amenity}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-white/50">No amenities listed</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-2">Target Audience</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProperty.targetAudience && selectedProperty.targetAudience.length > 0 ? (
+                      selectedProperty.targetAudience.map((aud, idx) => (
+                        <span key={idx} className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-semibold">
+                          {aud.charAt(0).toUpperCase() + aud.slice(1)}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-white/50">No target audience specified</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Add Interest and View on Map buttons directly in the property details */}
