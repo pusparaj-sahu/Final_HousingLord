@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import { checkExistingInterest } from '../lib/sanity';
+import { checkExistingInterest } from '../lib/sanityClient';
 import { toast } from 'react-hot-toast';
 
 interface InterestButtonProps {

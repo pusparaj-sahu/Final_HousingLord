@@ -3,7 +3,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import multer from 'multer';
-import { serverClient } from '../client/src/lib/sanityApi'; // Adjust path if needed
+import { serverClient } from './sanityServerClient'; // Adjust path if needed
 import express from 'express';
 import nodemailer from 'nodemailer';
 import fetch from 'node-fetch';
@@ -17,8 +17,8 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: 'housinglords@gmail.com',
-    pass: 'bzgtfwsdxucemgvx'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_APP_PASSWORD
   }
 });
 
@@ -217,10 +217,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           asset: { _type: 'reference', _ref: asset._id }
         });
       } catch (sanityErr: any) {
-        return res.status(500).json({ error: 'Sanity upload error', details: sanityErr?.message || sanityErr });
+        console.error('Failed to upload image to Sanity:', sanityErr);
+        // Log and send more detailed error information if available
+        const errorDetails = typeof sanityErr === 'object' && sanityErr !== null ? JSON.stringify(sanityErr) : String(sanityErr);
+        return res.status(500).json({ error: 'Failed to upload image to Sanity', details: errorDetails });
       }
     } catch (err: any) {
-      return res.status(500).json({ error: 'Failed to upload image to Sanity', details: err?.message || err });
+      console.error('Failed to upload image to Sanity:', err);
+      // Log and send more detailed error information if available
+      const errorDetails = typeof err === 'object' && err !== null ? JSON.stringify(err) : String(err);
+      return res.status(500).json({ error: 'Failed to upload image to Sanity', details: errorDetails });
     }
   });
 
@@ -276,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const ownerEmail = property?.owner?.email;
         const ownerName = property?.owner?.name || 'Property Owner';
         const propertyTitle = property?.title || 'Your Property';
-        const adminEmail = 'housinglords@gmail.com';
+        const adminEmail = process.env.ADMIN_EMAIL;
 
         if (!ownerEmail && !adminEmail) {
           console.error('No recipient emails found for notification');
@@ -301,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const recipients = recipientsArr.length === 1 ? recipientsArr[0] : recipientsArr;
 
         const mailOptions = {
-          from: '"Housing Lord" <housinglords@gmail.com>',
+          from: process.env.EMAIL_USER,
           to: recipients,
           subject: 'New Interest in Your Property',
           html: message,
@@ -384,10 +390,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 const router = express.Router();
 
 // Add your Clerk and Sanity credentials here
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY||"pk_test_YWNjdXJhdGUtY29icmEtNTkuY2xlcmsuYWNjb3VudHMuZGV2JA";
-const SANITY_PROJECT_ID = process.env.SANITY_PROJECT_ID ||"ogyoe0hr";
-const SANITY_DATASET = process.env.SANITY_DATASET ||"production";
-const SANITY_TOKEN = process.env.SANITY_TOKEN ||"skUUE01jpqseamiAtoni326efjYmv89AooBbHOHluCgqjd4sfC5fmpnDkOhdt3wlykRMLVvC0vnn6eEuSGDbDOhPNzTxKrrfwH3LZPdUIHL1vILkYiRcv8fugzWNjaoD38LDM6mLnO88pbHEhl1AqtrgyZEV5rvHBK0vZoJ5EhLODean9KE6" ;
+const CLERK_SECRET_KEY = process.env.VITE_CLERK_PUBLISHABLE_KEY;
+const SANITY_PROJECT_ID = process.env.VITE_SANITY_PROJECT_ID ||"ogyoe0hr";
+const SANITY_DATASET = process.env.VITE_SANITY_DATASET ||"production";
+const SANITY_TOKEN = process.env.VITE_SANITY_TOKEN;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ||"housinglords@gmail.com";
 
 router.post('/api/notify-interest', async (req, res) => {

@@ -4,13 +4,17 @@ import imageUrlBuilder from '@sanity/image-url'
 
 // This client is for public data only and doesn't use a token
 // It's safe to use in the browser
+
 export const sanityClient = createClient({
-  projectId: 'ogyoe0hr',
-  dataset: 'production',
-  useCdn: true, // Enable CDN for better performance
-  apiVersion: '2024-03-12', // Current date for API version
-  // Public client doesn't need a token for read-only operations
-  token: import.meta.env.VITE_SANITY_API_TOKEN || 'skUUE01jpqseamiAtoni326efjYmv89AooBbHOHluCgqjd4sfC5fmpnDkOhdt3wlykRMLVvC0vnn6eEuSGDbDOhPNzTxKrrfwH3LZPdUIHL1vILkYiRcv8fugzWNjaoD38LDM6mLnO88pbHEhl1AqtrgyZEV5rvHBK0vZoJ5EhLODean9KE6',
+  projectId: import.meta.env.VITE_SANITY_PROJECT_ID || 'ogyoe0hr',
+  dataset: import.meta.env.VITE_SANITY_DATASET || 'production',
+  apiVersion: '2025-04-03',
+  useCdn: false, // Use CDN for better performance
+  // Add these options to help with CORS issues
+  withCredentials: false,
+  token: import.meta.env.VITE_SANITY_TOKEN, // Use import.meta.env for browser client
+  // Use the correct Sanity API URL format
+  apiHost: 'https://api.sanity.io',
 })
 
 // Export client as an alias for sanityClient
@@ -57,8 +61,8 @@ export async function updateDocumentTitle(_id: string, title: string) {
   return result
 }
 
-// Fetch properties with error handling
-export async function getProperties() {
+// Fetch properties with error handling - using publicClient for browser safety
+export const getProperties = async (): Promise<any[]> => {
   try {
     const properties = await sanityClient.fetch(`*[_type == "property"] {
       _id,
@@ -82,7 +86,7 @@ export async function getProperties() {
     console.error('Error fetching properties:', error);
     return [];
   }
-}
+};
 
 // Create property with error handling
 export async function createProperty(property: any) {
@@ -125,3 +129,78 @@ export async function uploadImageToSanity(file: File) {
 
   return await response.json();
 }
+
+// Merged functions from sanity.ts
+export const createInterest = async (userId: string, propertyId: string) => {
+  try {
+    const interest = await sanityClient.create({
+      _type: 'interest',
+      user: {
+        _type: 'reference',
+        _ref: userId,
+      },
+      property: {
+        _type: 'reference',
+        _ref: propertyId,
+      },
+      status: 'pending',
+    });
+
+    // Update the property's interests array
+    await sanityClient
+      .patch(propertyId)
+      .setIfMissing({ interests: [] })
+      .insert('after', 'interests[-1]', [{
+        _type: 'reference',
+        _ref: interest._id,
+      }])
+      .commit();
+
+    // Update the user's interests array
+    await sanityClient
+      .patch(userId)
+      .setIfMissing({ interests: [] })
+      .insert('after', 'interests[-1]', [{
+        _type: 'reference',
+        _ref: interest._id,
+      }])
+      .commit();
+
+    // Notify backend to send email
+    try {
+      await fetch('/api/notify-interest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId, userId }),
+      });
+    } catch (notifyError) {
+      console.error('Failed to notify backend for email:', notifyError);
+    }
+
+    return interest;
+  } catch (error) {
+    console.error('Error creating interest:', error);
+    throw error;
+  }
+};
+
+export const checkExistingInterest = async (userId: string, propertyId: string) => {
+  const query = `*[_type == "interest" && user._ref == $userId && property._ref == $propertyId][0]`;
+  return await sanityClient.fetch(query, { userId, propertyId });
+};
+
+export const getPropertyInterests = async (propertyId: string) => {
+  const query = `*[_type == "interest" && property._ref == $propertyId]{
+    _id,
+    status,
+    createdAt,
+    user->{
+      _id,
+      name,
+      email,
+      phone,
+      profileImage
+    }
+  }`;
+  return await sanityClient.fetch(query, { propertyId });
+};

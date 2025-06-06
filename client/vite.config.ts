@@ -13,8 +13,8 @@ export default defineConfig(({ mode }) => {
     // Make sure environment variables are properly loaded
     envDir: path.resolve(__dirname),
     define: {
-      // Make env variables available globally
-      'process.env': env
+      // Expose environment variables to client-side code
+      'import.meta.env': JSON.stringify(env),
     },
     server: {
       // Ensure server can access env variables
